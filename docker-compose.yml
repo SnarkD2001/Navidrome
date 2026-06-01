@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  navidrome-player:
+    build: .
+    container_name: navidrome-player
+    ports:
+      - "3000:80"
+    volumes:
+      # 音乐文件夹（挂载到宿主机的音乐目录）
+      - /path/to/music:/music
+      # 上传临时文件
+      - uploads:/app/uploads
+      # 后端配置持久化
+      - ./server/config.json:/app/server/config.json
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  uploads:
