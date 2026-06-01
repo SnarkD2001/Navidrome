@@ -15,7 +15,6 @@ interface CardPosition {
   track: SubsonicSong;
 }
 
-// IndexedDB
 const DB_NAME = 'navidrome-player';
 const STORE_NAME = 'backgrounds';
 
@@ -44,7 +43,6 @@ async function loadBgFromDB(): Promise<string | null> {
   });
 }
 
-// Poisson Disk Sampling
 function poissonDiskSampling(
   count: number,
   width: number,
@@ -330,7 +328,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     smoothMousePosRef.current.x += (mousePosRef.current.x - smoothMousePosRef.current.x) * mouseLerp;
     smoothMousePosRef.current.y += (mousePosRef.current.y - smoothMousePosRef.current.y) * mouseLerp;
     
-    // 亮色背景
+    // 背景
     if (customBgImageRef.current && customBgImageRef.current.complete && customBgImageRef.current.naturalWidth > 0) {
       const img = customBgImageRef.current;
       const imgRatio = img.width / img.height;
@@ -353,7 +351,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
       ctx.fillRect(0, 0, width, height);
     } else {
-      // 亮色渐变背景
       const gradient = ctx.createLinearGradient(0, 0, width, height);
       gradient.addColorStop(0, '#f8fafc');
       gradient.addColorStop(0.5, '#f1f5f9');
@@ -361,7 +358,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
       
-      // 添加装饰性渐变
       const gradient2 = ctx.createRadialGradient(width * 0.2, height * 0.2, 0, width * 0.2, height * 0.2, width * 0.5);
       gradient2.addColorStop(0, 'rgba(59, 130, 246, 0.08)');
       gradient2.addColorStop(1, 'transparent');
@@ -429,7 +425,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       const radius = 16;
       const imgHeight = CARD_HEIGHT - 40;
       
-      // 亮色卡片阴影
+      // 卡片阴影
       ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
       ctx.shadowBlur = 20 + (scale - 1) * 30;
       ctx.shadowOffsetY = 4 + (scale - 1) * 8;
@@ -501,35 +497,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         ctx.fill();
       }
       
-      // 红心按钮
-      const heartX = CARD_WIDTH - 28;
-      const heartY = 18;
-      const heartSize = 14;
-      
-      if (isLiked) {
-        ctx.fillStyle = '#ef4444';
-        ctx.shadowColor = 'rgba(239, 68, 68, 0.4)';
-        ctx.shadowBlur = 6;
-        ctx.beginPath();
-        ctx.moveTo(heartX, heartY + heartSize * 0.3);
-        ctx.bezierCurveTo(heartX, heartY, heartX - heartSize * 0.5, heartY, heartX - heartSize * 0.5, heartY + heartSize * 0.3);
-        ctx.bezierCurveTo(heartX - heartSize * 0.5, heartY + heartSize * 0.6, heartX, heartY + heartSize * 0.8, heartX, heartY + heartSize);
-        ctx.bezierCurveTo(heartX, heartY + heartSize * 0.8, heartX + heartSize * 0.5, heartY + heartSize * 0.6, heartX + heartSize * 0.5, heartY + heartSize * 0.3);
-        ctx.bezierCurveTo(heartX + heartSize * 0.5, heartY, heartX, heartY, heartX, heartY + heartSize * 0.3);
-        ctx.fill();
-        ctx.shadowColor = 'transparent';
-      } else if (isHovered) {
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(heartX, heartY + heartSize * 0.3);
-        ctx.bezierCurveTo(heartX, heartY, heartX - heartSize * 0.5, heartY, heartX - heartSize * 0.5, heartY + heartSize * 0.3);
-        ctx.bezierCurveTo(heartX - heartSize * 0.5, heartY + heartSize * 0.6, heartX, heartY + heartSize * 0.8, heartX, heartY + heartSize);
-        ctx.bezierCurveTo(heartX, heartY + heartSize * 0.8, heartX + heartSize * 0.5, heartY + heartSize * 0.6, heartX + heartSize * 0.5, heartY + heartSize * 0.3);
-        ctx.bezierCurveTo(heartX + heartSize * 0.5, heartY, heartX, heartY, heartX, heartY + heartSize * 0.3);
-        ctx.stroke();
-      }
-      
       // 播放中指示器
       if (isPlaying) {
         ctx.strokeStyle = '#3b82f6';
@@ -552,7 +519,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         }
       }
       
-      // 信息区域 - 浅灰背景
+      // 信息区域背景
       ctx.fillStyle = '#f8fafc';
       ctx.beginPath();
       ctx.roundRect(0, imgHeight, CARD_WIDTH, 40, [0, 0, radius, radius]);
@@ -562,7 +529,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
       ctx.fillRect(12, imgHeight, CARD_WIDTH - 24, 1);
       
-      // 标题 - 深色
+      // 标题
       ctx.fillStyle = '#0f172a';
       ctx.font = '600 12px Inter, system-ui, sans-serif';
       ctx.textAlign = 'left';
@@ -570,11 +537,40 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       const title = card.track.title.length > 14 ? card.track.title.slice(0, 14) + '…' : card.track.title;
       ctx.fillText(title, 12, imgHeight + 10);
       
-      // 艺术家 - 灰色
+      // 艺术家
       ctx.fillStyle = '#64748b';
       ctx.font = '11px Inter, system-ui, sans-serif';
       const artist = card.track.artist.length > 17 ? card.track.artist.slice(0, 17) + '…' : card.track.artist;
       ctx.fillText(artist, 12, imgHeight + 26);
+      
+      // 红心按钮 - 右下角
+      const heartX = CARD_WIDTH - 24;
+      const heartY = CARD_HEIGHT - 16;
+      const heartSize = 14;
+      
+      if (isLiked) {
+        ctx.fillStyle = '#ef4444';
+        ctx.shadowColor = 'rgba(239, 68, 68, 0.4)';
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.moveTo(heartX, heartY + heartSize * 0.3);
+        ctx.bezierCurveTo(heartX, heartY, heartX - heartSize * 0.5, heartY, heartX - heartSize * 0.5, heartY + heartSize * 0.3);
+        ctx.bezierCurveTo(heartX - heartSize * 0.5, heartY + heartSize * 0.6, heartX, heartY + heartSize * 0.8, heartX, heartY + heartSize);
+        ctx.bezierCurveTo(heartX, heartY + heartSize * 0.8, heartX + heartSize * 0.5, heartY + heartSize * 0.6, heartX + heartSize * 0.5, heartY + heartSize * 0.3);
+        ctx.bezierCurveTo(heartX + heartSize * 0.5, heartY, heartX, heartY, heartX, heartY + heartSize * 0.3);
+        ctx.fill();
+        ctx.shadowColor = 'transparent';
+      } else if (isHovered) {
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(heartX, heartY + heartSize * 0.3);
+        ctx.bezierCurveTo(heartX, heartY, heartX - heartSize * 0.5, heartY, heartX - heartSize * 0.5, heartY + heartSize * 0.3);
+        ctx.bezierCurveTo(heartX - heartSize * 0.5, heartY + heartSize * 0.6, heartX, heartY + heartSize * 0.8, heartX, heartY + heartSize);
+        ctx.bezierCurveTo(heartX, heartY + heartSize * 0.8, heartX + heartSize * 0.5, heartY + heartSize * 0.6, heartX + heartSize * 0.5, heartY + heartSize * 0.3);
+        ctx.bezierCurveTo(heartX + heartSize * 0.5, heartY, heartX, heartY, heartX, heartY + heartSize * 0.3);
+        ctx.stroke();
+      }
       
       ctx.restore();
     });
@@ -623,8 +619,9 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     const centerX = card.x + CARD_WIDTH / 2 - scrollX;
     const centerY = card.y + CARD_HEIGHT / 2 - scrollY;
     
-    const heartX = centerX + (CARD_WIDTH / 2 - 28) * scale;
-    const heartY = centerY + (-CARD_HEIGHT / 2 + 18) * scale;
+    // 右下角红心位置
+    const heartX = centerX + (CARD_WIDTH / 2 - 24) * scale;
+    const heartY = centerY + (CARD_HEIGHT / 2 - 16) * scale;
     
     const dx = clientX - heartX;
     const dy = clientY - heartY;
@@ -736,7 +733,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         onContextMenu={handleContextMenu}
       />
 
-      {/* 顶部导航栏 - 亮色毛玻璃 */}
+      {/* 顶部导航栏 */}
       <div className="fixed top-6 left-1/2 -translate-x-1/2 z-30">
         <div className="flex items-center gap-3 px-4 py-2.5 bg-white/80 backdrop-blur-2xl rounded-2xl border border-black/[0.06] shadow-lg shadow-black/5">
           <div className="flex items-center gap-2">
