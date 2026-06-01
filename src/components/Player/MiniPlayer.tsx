@@ -58,10 +58,10 @@ export default function MiniPlayer() {
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-      <div className="flex items-center gap-3 px-4 py-3 bg-gray-800/80 backdrop-blur-2xl rounded-2xl border border-white/10 shadow-2xl shadow-black/50">
+      <div className="flex items-center gap-3 px-4 py-3 bg-white/90 backdrop-blur-2xl rounded-2xl border border-black/[0.06] shadow-lg shadow-black/10">
         {/* 封面 */}
         <div
-          className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 cursor-pointer hover:scale-105 transition-transform duration-200"
+          className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 cursor-pointer hover:scale-105 transition-transform duration-200 shadow-sm"
           onClick={toggleFullPlayer}
         >
           <CoverImage 
@@ -74,20 +74,20 @@ export default function MiniPlayer() {
 
         {/* 曲名和艺术家 */}
         <div className="w-32 min-w-0 hidden sm:block">
-          <div className="text-sm font-medium text-white truncate">{currentTrack.title}</div>
-          <div className="text-xs text-gray-400 truncate">{currentTrack.artist}</div>
+          <div className="text-sm font-medium text-gray-900 truncate">{currentTrack.title}</div>
+          <div className="text-xs text-gray-500 truncate">{currentTrack.artist}</div>
         </div>
 
         {/* 分隔线 */}
-        <div className="w-px h-8 bg-white/10 hidden sm:block" />
+        <div className="w-px h-8 bg-gray-200 hidden sm:block" />
 
         {/* 播放控制 */}
         <div className="flex items-center gap-1">
           <button
             className={`p-2 rounded-full transition-all duration-200 ${
               mode !== 'sequential' 
-                ? 'text-blue-400 hover:bg-white/10' 
-                : 'text-gray-400 hover:text-white hover:bg-white/10'
+                ? 'text-blue-500 hover:bg-blue-50' 
+                : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
             }`}
             onClick={cycleMode}
             title={mode === 'sequential' ? '顺序播放' : mode === 'shuffle' ? '随机播放' : '单曲循环'}
@@ -96,21 +96,21 @@ export default function MiniPlayer() {
           </button>
           
           <button 
-            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all duration-200" 
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200" 
             onClick={prev}
           >
             <Icon name="skip-back" size={18} />
           </button>
           
           <button
-            className="w-10 h-10 rounded-full bg-white hover:bg-gray-200 flex items-center justify-center text-black transition-all duration-200 hover:scale-105 active:scale-95"
+            className="w-10 h-10 rounded-full bg-gray-900 hover:bg-gray-800 flex items-center justify-center text-white transition-all duration-200 hover:scale-105 active:scale-95 shadow-md"
             onClick={togglePlay}
           >
             <Icon name={isPlaying ? 'pause' : 'play'} size={18} className={isPlaying ? '' : 'ml-0.5'} />
           </button>
           
           <button 
-            className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all duration-200" 
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-all duration-200" 
             onClick={next}
           >
             <Icon name="skip-forward" size={18} />
@@ -118,7 +118,7 @@ export default function MiniPlayer() {
         </div>
 
         {/* 分隔线 */}
-        <div className="w-px h-8 bg-white/10 hidden md:block" />
+        <div className="w-px h-8 bg-gray-200 hidden md:block" />
 
         {/* 进度条 */}
         <div className="hidden md:flex items-center gap-2 w-48">
@@ -126,14 +126,14 @@ export default function MiniPlayer() {
             {formatTime(currentTime)}
           </span>
           <div
-            className="flex-1 h-1 bg-white/10 rounded-full cursor-pointer group relative"
+            className="flex-1 h-1 bg-gray-200 rounded-full cursor-pointer group relative"
             onClick={handleProgressClick}
           >
             <div
-              className="h-full bg-white rounded-full transition-all duration-100 relative"
+              className="h-full bg-gray-900 rounded-full transition-all duration-100 relative"
               style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
             >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" />
+              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-gray-900 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-sm" />
             </div>
           </div>
           <span className="text-xs text-gray-400 tabular-nums w-10">
@@ -142,12 +142,12 @@ export default function MiniPlayer() {
         </div>
 
         {/* 分隔线 */}
-        <div className="w-px h-8 bg-white/10 hidden lg:block" />
+        <div className="w-px h-8 bg-gray-200 hidden lg:block" />
 
         {/* 音量 */}
         <div className="hidden lg:flex items-center gap-2">
           <button
-            className="p-1.5 text-gray-400 hover:text-white transition-colors"
+            className="p-1.5 text-gray-400 hover:text-gray-600 transition-colors"
             onClick={() => setVolume(volume === 0 ? 0.7 : 0)}
           >
             <Icon name={getVolumeIcon()} size={16} />
@@ -159,7 +159,7 @@ export default function MiniPlayer() {
             step="0.01"
             value={volume}
             onChange={(e) => setVolume(parseFloat(e.target.value))}
-            className="w-20 h-1 bg-white/10 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg"
+            className="w-20 h-1 bg-gray-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-gray-900 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-sm"
           />
         </div>
       </div>

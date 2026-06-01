@@ -32,7 +32,6 @@ export default function Login({ onLogin }: LoginProps) {
         salt,
       };
 
-      // Test connection with fetch directly
       const params = new URLSearchParams({
         u: config.username,
         t: config.token,
@@ -43,26 +42,21 @@ export default function Login({ onLogin }: LoginProps) {
       });
 
       const pingUrl = `${config.url}/rest/ping?${params.toString()}`;
-      console.log('Testing connection to:', pingUrl);
-
       const response = await fetch(pingUrl);
+      
       if (!response.ok) {
         throw new Error(`服务器返回错误: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('Ping response:', data);
 
       if (data['subsonic-response']?.status !== 'ok') {
         throw new Error(data['subsonic-response']?.error?.message || '认证失败');
       }
 
-      // Save config
       localStorage.setItem('navidrome-server', JSON.stringify(config));
-      console.log('Config saved, calling onLogin');
       onLogin(config);
     } catch (err: any) {
-      console.error('Login error:', err);
       if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
         setError('无法连接到服务器，请检查地址是否正确');
       } else {
@@ -74,58 +68,60 @@ export default function Login({ onLogin }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[rgb(var(--bg-primary))]">
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
       <div className="w-full max-w-md p-8">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Icon name="music" size={40} className="text-[rgb(var(--accent))]" />
-            <h1 className="text-4xl font-bold">Navidrome</h1>
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <Icon name="music" size={24} className="text-white" />
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900">Navidrome</h1>
           </div>
-          <p className="text-[rgb(var(--text-secondary))]">连接你的私人音乐库</p>
+          <p className="text-gray-500">连接你的私人音乐库</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">服务器地址</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">服务器地址</label>
             <input
               type="url"
               value={serverUrl}
               onChange={(e) => setServerUrl(e.target.value)}
               placeholder="http://192.168.1.100:4533"
-              className="w-full px-4 py-3 bg-[rgb(var(--bg-card))] rounded-xl border border-white/10 focus:outline-none focus:border-[rgb(var(--accent))] transition-colors"
+              className="w-full px-4 py-3 bg-white rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all text-gray-900 placeholder-gray-400"
               required
             />
-            <p className="text-xs text-[rgb(var(--text-secondary))] mt-1">
+            <p className="text-xs text-gray-400 mt-1">
               示例: http://192.168.1.100:4533 或 https://music.example.com
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">用户名</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">用户名</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="admin"
-              className="w-full px-4 py-3 bg-[rgb(var(--bg-card))] rounded-xl border border-white/10 focus:outline-none focus:border-[rgb(var(--accent))] transition-colors"
+              className="w-full px-4 py-3 bg-white rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all text-gray-900 placeholder-gray-400"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">密码</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">密码</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-3 bg-[rgb(var(--bg-card))] rounded-xl border border-white/10 focus:outline-none focus:border-[rgb(var(--accent))] transition-colors"
+              className="w-full px-4 py-3 bg-white rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all text-gray-900 placeholder-gray-400"
               required
             />
           </div>
 
           {error && (
-            <div className="text-red-400 text-sm text-center py-2 bg-red-400/10 rounded-lg">
+            <div className="text-red-500 text-sm text-center py-3 bg-red-50 rounded-xl">
               {error}
             </div>
           )}
@@ -133,13 +129,13 @@ export default function Login({ onLogin }: LoginProps) {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-[rgb(var(--accent))] hover:bg-[rgb(var(--accent-hover))] disabled:opacity-50 rounded-xl font-medium transition-colors"
+            className="w-full py-3 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl font-medium transition-all duration-200 text-white hover:scale-[1.02] active:scale-[0.98]"
           >
             {isLoading ? '连接中...' : '登录'}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-[rgb(var(--text-secondary))]">
+        <div className="mt-6 text-center text-xs text-gray-400">
           支持 Subsonic API 1.16.1+
         </div>
       </div>

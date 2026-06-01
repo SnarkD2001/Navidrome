@@ -177,7 +177,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
 
   const config = getConfig();
 
-  // 初始化"我喜欢"歌单
   useEffect(() => {
     const initLikedPlaylist = async () => {
       if (!config) return;
@@ -191,7 +190,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
           usePlaylistStore.getState().fetchPlaylists(config);
         }
         
-        // 加载已喜欢的歌曲
         if (likedPlaylist && likedPlaylist.entry) {
           const liked = new Set(likedPlaylist.entry.map(s => s.id));
           setLikedTracks(liked);
@@ -221,7 +219,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     }).catch(() => setBgLoaded(true));
   }, []);
 
-  // 切换喜欢状态
   const toggleLike = useCallback(async (track: SubsonicSong, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!config) return;
@@ -333,7 +330,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     smoothMousePosRef.current.x += (mousePosRef.current.x - smoothMousePosRef.current.x) * mouseLerp;
     smoothMousePosRef.current.y += (mousePosRef.current.y - smoothMousePosRef.current.y) * mouseLerp;
     
-    // 背景
+    // 亮色背景
     if (customBgImageRef.current && customBgImageRef.current.complete && customBgImageRef.current.naturalWidth > 0) {
       const img = customBgImageRef.current;
       const imgRatio = img.width / img.height;
@@ -353,24 +350,26 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       }
       
       ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
       ctx.fillRect(0, 0, width, height);
     } else {
+      // 亮色渐变背景
       const gradient = ctx.createLinearGradient(0, 0, width, height);
-      gradient.addColorStop(0, '#0f0f1a');
-      gradient.addColorStop(0.5, '#1a1a2e');
-      gradient.addColorStop(1, '#0d1117');
+      gradient.addColorStop(0, '#f8fafc');
+      gradient.addColorStop(0.5, '#f1f5f9');
+      gradient.addColorStop(1, '#e2e8f0');
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
       
-      const gradient2 = ctx.createRadialGradient(width * 0.3, height * 0.3, 0, width * 0.3, height * 0.3, width * 0.5);
-      gradient2.addColorStop(0, 'rgba(59, 130, 246, 0.05)');
+      // 添加装饰性渐变
+      const gradient2 = ctx.createRadialGradient(width * 0.2, height * 0.2, 0, width * 0.2, height * 0.2, width * 0.5);
+      gradient2.addColorStop(0, 'rgba(59, 130, 246, 0.08)');
       gradient2.addColorStop(1, 'transparent');
       ctx.fillStyle = gradient2;
       ctx.fillRect(0, 0, width, height);
       
-      const gradient3 = ctx.createRadialGradient(width * 0.7, height * 0.7, 0, width * 0.7, height * 0.7, width * 0.4);
-      gradient3.addColorStop(0, 'rgba(139, 92, 246, 0.03)');
+      const gradient3 = ctx.createRadialGradient(width * 0.8, height * 0.8, 0, width * 0.8, height * 0.8, width * 0.4);
+      gradient3.addColorStop(0, 'rgba(139, 92, 246, 0.06)');
       gradient3.addColorStop(1, 'transparent');
       ctx.fillStyle = gradient3;
       ctx.fillRect(0, 0, width, height);
@@ -430,20 +429,20 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       const radius = 16;
       const imgHeight = CARD_HEIGHT - 40;
       
-      // 阴影
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-      ctx.shadowBlur = 30 + (scale - 1) * 40;
-      ctx.shadowOffsetY = 10 + (scale - 1) * 15;
+      // 亮色卡片阴影
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+      ctx.shadowBlur = 20 + (scale - 1) * 30;
+      ctx.shadowOffsetY = 4 + (scale - 1) * 8;
       
-      // 卡片背景
-      ctx.fillStyle = '#1a1f2e';
+      // 白色卡片背景
+      ctx.fillStyle = '#ffffff';
       ctx.beginPath();
       ctx.roundRect(0, 0, CARD_WIDTH, CARD_HEIGHT, radius);
       ctx.fill();
       ctx.shadowColor = 'transparent';
       
-      // 内部边框高光
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      // 细边框
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.06)';
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.roundRect(0.5, 0.5, CARD_WIDTH - 1, CARD_HEIGHT - 1, radius);
@@ -454,26 +453,17 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       if (img && img.complete && img.naturalWidth > 0) {
         ctx.save();
         ctx.beginPath();
-        ctx.roundRect(6, 6, CARD_WIDTH - 12, imgHeight - 6, [radius - 2, radius - 2, 6, 6]);
+        ctx.roundRect(8, 8, CARD_WIDTH - 16, imgHeight - 8, [radius - 2, radius - 2, 4, 4]);
         ctx.clip();
-        ctx.drawImage(img, 6, 6, CARD_WIDTH - 12, imgHeight - 6);
+        ctx.drawImage(img, 8, 8, CARD_WIDTH - 16, imgHeight - 8);
         ctx.restore();
-        
-        // 封面渐变遮罩
-        const gradient = ctx.createLinearGradient(0, imgHeight - 50, 0, imgHeight);
-        gradient.addColorStop(0, 'transparent');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.roundRect(6, 6, CARD_WIDTH - 12, imgHeight - 6, [radius - 2, radius - 2, 6, 6]);
-        ctx.fill();
       } else {
-        ctx.fillStyle = '#252a3a';
+        ctx.fillStyle = '#f1f5f9';
         ctx.beginPath();
-        ctx.roundRect(6, 6, CARD_WIDTH - 12, imgHeight - 6, [radius - 2, radius - 2, 6, 6]);
+        ctx.roundRect(8, 8, CARD_WIDTH - 16, imgHeight - 8, [radius - 2, radius - 2, 4, 4]);
         ctx.fill();
         
-        ctx.fillStyle = '#4a5568';
+        ctx.fillStyle = '#94a3b8';
         ctx.font = '48px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -487,9 +477,9 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       const isHovered = distToMouse < CARD_WIDTH * 0.7 && scale > 1.15;
       
       if (isHovered) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
         ctx.beginPath();
-        ctx.roundRect(6, 6, CARD_WIDTH - 12, imgHeight - 6, [radius - 2, radius - 2, 6, 6]);
+        ctx.roundRect(8, 8, CARD_WIDTH - 16, imgHeight - 8, [radius - 2, radius - 2, 4, 4]);
         ctx.fill();
         
         // 播放按钮
@@ -497,7 +487,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         ctx.beginPath();
         ctx.arc(CARD_WIDTH / 2, imgHeight / 2, btnRadius, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
         ctx.shadowBlur = 10;
         ctx.fill();
         ctx.shadowColor = 'transparent';
@@ -507,20 +497,19 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         ctx.lineTo(CARD_WIDTH / 2 + 14, imgHeight / 2);
         ctx.lineTo(CARD_WIDTH / 2 - 8, imgHeight / 2 + 12);
         ctx.closePath();
-        ctx.fillStyle = '#1a1f2e';
+        ctx.fillStyle = '#0f172a';
         ctx.fill();
       }
       
-      // 红心按钮（始终显示）
+      // 红心按钮
       const heartX = CARD_WIDTH - 28;
       const heartY = 18;
       const heartSize = 14;
       
       if (isLiked) {
-        // 已喜欢 - 填充红色心形
         ctx.fillStyle = '#ef4444';
-        ctx.shadowColor = 'rgba(239, 68, 68, 0.5)';
-        ctx.shadowBlur = 8;
+        ctx.shadowColor = 'rgba(239, 68, 68, 0.4)';
+        ctx.shadowBlur = 6;
         ctx.beginPath();
         ctx.moveTo(heartX, heartY + heartSize * 0.3);
         ctx.bezierCurveTo(heartX, heartY, heartX - heartSize * 0.5, heartY, heartX - heartSize * 0.5, heartY + heartSize * 0.3);
@@ -530,8 +519,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         ctx.fill();
         ctx.shadowColor = 'transparent';
       } else if (isHovered) {
-        // 悬停时显示空心心形
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(heartX, heartY + heartSize * 0.3);
@@ -546,14 +534,14 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       if (isPlaying) {
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 3;
-        ctx.shadowColor = '#3b82f6';
-        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'rgba(59, 130, 246, 0.3)';
+        ctx.shadowBlur = 10;
         ctx.beginPath();
         ctx.roundRect(1.5, 1.5, CARD_WIDTH - 3, CARD_HEIGHT - 3, radius);
         ctx.stroke();
         ctx.shadowColor = 'transparent';
         
-        // 音波动画指示器
+        // 音波动画
         const waveX = 14;
         const waveY = imgHeight - 20;
         ctx.fillStyle = '#3b82f6';
@@ -564,26 +552,26 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         }
       }
       
-      // 信息区域背景
-      ctx.fillStyle = 'rgba(20, 25, 40, 0.95)';
+      // 信息区域 - 浅灰背景
+      ctx.fillStyle = '#f8fafc';
       ctx.beginPath();
       ctx.roundRect(0, imgHeight, CARD_WIDTH, 40, [0, 0, radius, radius]);
       ctx.fill();
       
       // 分隔线
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.06)';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
       ctx.fillRect(12, imgHeight, CARD_WIDTH - 24, 1);
       
-      // 标题
-      ctx.fillStyle = '#f1f5f9';
+      // 标题 - 深色
+      ctx.fillStyle = '#0f172a';
       ctx.font = '600 12px Inter, system-ui, sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
       const title = card.track.title.length > 14 ? card.track.title.slice(0, 14) + '…' : card.track.title;
       ctx.fillText(title, 12, imgHeight + 10);
       
-      // 艺术家
-      ctx.fillStyle = '#7c839a';
+      // 艺术家 - 灰色
+      ctx.fillStyle = '#64748b';
       ctx.font = '11px Inter, system-ui, sans-serif';
       const artist = card.track.artist.length > 17 ? card.track.artist.slice(0, 17) + '…' : card.track.artist;
       ctx.fillText(artist, 12, imgHeight + 26);
@@ -592,7 +580,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     });
   }, [cardPositions, currentTrack, likedTracks]);
 
-  // 动画循环
   useEffect(() => {
     let animId: number;
     const animate = () => {
@@ -626,7 +613,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     return -1;
   }, [cardPositions]);
 
-  // 检查点击是否在红心按钮上
   const isClickOnHeart = useCallback((clientX: number, clientY: number, cardIndex: number): boolean => {
     if (cardIndex < 0) return false;
     
@@ -679,7 +665,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       if (dx < 5 && dy < 5) {
         const cardIndex = getCardAtPosition(e.clientX, e.clientY);
         if (cardIndex >= 0) {
-          // 检查是否点击了红心按钮
           if (isClickOnHeart(e.clientX, e.clientY, cardIndex)) {
             toggleLike(cardPositions[cardIndex].track, e);
           } else {
@@ -711,20 +696,20 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
 
   if (isLoading || !bgLoaded) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0f0f1a]">
-        <div className="text-gray-400">加载中...</div>
+      <div className="flex items-center justify-center h-screen bg-[#f8fafc]">
+        <div className="text-gray-500">加载中...</div>
       </div>
     );
   }
 
   if (tracks.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen bg-[#0f0f1a]">
+      <div className="flex items-center justify-center h-screen bg-[#f8fafc]">
         <div className="text-center">
-          <Icon name="music" size={64} className="mx-auto mb-4 text-gray-600" />
-          <div className="text-gray-400 mb-4">暂无曲目</div>
+          <Icon name="music" size={64} className="mx-auto mb-4 text-gray-300" />
+          <div className="text-gray-500 mb-4">暂无曲目</div>
           <button
-            className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 rounded-xl transition-all duration-200 hover:scale-105"
+            className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 rounded-xl transition-all duration-200 hover:scale-105 text-white"
             onClick={onLogout}
           >
             重新登录
@@ -735,7 +720,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
   }
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#0f0f1a] relative">
+    <div className="h-screen w-screen overflow-hidden bg-[#f8fafc] relative">
       <canvas
         ref={canvasRef}
         className="absolute inset-0"
@@ -751,19 +736,19 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         onContextMenu={handleContextMenu}
       />
 
-      {/* 顶部导航栏 */}
+      {/* 顶部导航栏 - 亮色毛玻璃 */}
       <div className="fixed top-6 left-1/2 -translate-x-1/2 z-30">
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-[#1a1f2e]/80 backdrop-blur-2xl rounded-2xl border border-white/[0.08] shadow-2xl shadow-black/50">
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-white/80 backdrop-blur-2xl rounded-2xl border border-black/[0.06] shadow-lg shadow-black/5">
           <div className="flex items-center gap-2">
-            <Icon name="music" size={20} className="text-blue-400" />
-            <span className="text-sm font-semibold text-white">Navidrome</span>
+            <Icon name="music" size={20} className="text-blue-500" />
+            <span className="text-sm font-semibold text-gray-900">Navidrome</span>
           </div>
 
-          <div className="w-px h-6 bg-white/10" />
+          <div className="w-px h-6 bg-gray-200" />
 
           <div className="relative">
             <button
-              className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/10 rounded-xl transition-all duration-200 text-white"
+              className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-100 rounded-xl transition-all duration-200 text-gray-700"
               onClick={() => setShowPlaylistMenu(!showPlaylistMenu)}
             >
               <Icon name="playlist" size={14} />
@@ -778,11 +763,11 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
             {showPlaylistMenu && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowPlaylistMenu(false)} />
-                <div className="absolute top-full left-0 mt-2 w-56 bg-[#1a1f2e]/95 backdrop-blur-2xl rounded-xl border border-white/[0.08] shadow-2xl shadow-black/50 z-50 overflow-hidden">
+                <div className="absolute top-full left-0 mt-2 w-56 bg-white/95 backdrop-blur-2xl rounded-xl border border-black/[0.06] shadow-xl z-50 overflow-hidden">
                   <div className="py-1">
                     <button
-                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 hover:bg-white/10 transition-colors ${
-                        viewMode === 'all-tracks' ? 'text-blue-400' : 'text-gray-300'
+                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 hover:bg-gray-100 transition-colors ${
+                        viewMode === 'all-tracks' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
                       }`}
                       onClick={() => {
                         usePlaylistStore.getState().setViewMode('all-tracks');
@@ -794,8 +779,8 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
                       全部曲目
                     </button>
                     <button
-                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 hover:bg-white/10 transition-colors ${
-                        viewMode === 'recent' ? 'text-blue-400' : 'text-gray-300'
+                      className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 hover:bg-gray-100 transition-colors ${
+                        viewMode === 'recent' ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
                       }`}
                       onClick={() => {
                         usePlaylistStore.getState().setViewMode('recent');
@@ -811,17 +796,17 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
                     </button>
                   </div>
 
-                  <div className="border-t border-white/[0.06]" />
+                  <div className="border-t border-gray-100" />
 
                   <div className="max-h-48 overflow-y-auto py-1">
                     {playlists.length === 0 ? (
-                      <div className="px-4 py-3 text-xs text-gray-500">暂无歌单</div>
+                      <div className="px-4 py-3 text-xs text-gray-400">暂无歌单</div>
                     ) : (
                       playlists.map(playlist => (
                         <button
                           key={playlist.id}
-                          className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 hover:bg-white/10 transition-colors ${
-                            activePlaylist?.id === playlist.id ? 'text-blue-400' : 'text-gray-300'
+                          className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-3 hover:bg-gray-100 transition-colors ${
+                            activePlaylist?.id === playlist.id ? 'text-blue-600 bg-blue-50' : 'text-gray-700'
                           }`}
                           onClick={() => {
                             const cfg = getConfig();
@@ -834,7 +819,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
                         >
                           <Icon name="music" size={14} />
                           <span className="truncate flex-1">{playlist.name}</span>
-                          <span className="text-xs text-gray-500">{playlist.songCount}</span>
+                          <span className="text-xs text-gray-400">{playlist.songCount}</span>
                         </button>
                       ))
                     )}
@@ -844,10 +829,10 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
             )}
           </div>
 
-          <div className="w-px h-6 bg-white/10" />
+          <div className="w-px h-6 bg-gray-200" />
 
           <button
-            className="p-1.5 hover:bg-white/10 rounded-lg transition-all duration-200 text-gray-400 hover:text-white"
+            className="p-1.5 hover:bg-gray-100 rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700"
             onClick={() => window.location.href = '/admin'}
             title="后台管理"
           >

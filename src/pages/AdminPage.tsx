@@ -60,7 +60,7 @@ interface AdminPageProps {
   onLogout: () => void;
 }
 
-type AdminTab = 'playlists' | 'upload' | 'wallpaper' | 'settings' | 'about';
+type AdminTab = 'upload' | 'playlists' | 'wallpaper' | 'settings' | 'about';
 
 const API_URL = 'http://localhost:3001';
 
@@ -78,12 +78,9 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  // 上传相关
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
   
-  // 后端配置
   const [backendConfig, setBackendConfig] = useState({
     musicFolder: '',
     navidromeUrl: '',
@@ -120,7 +117,6 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
     setTimeout(() => setErrorMessage(null), 5000);
   };
 
-  // 加载后端配置
   const loadBackendConfig = async () => {
     try {
       const res = await fetch(`${API_URL}/api/config`);
@@ -133,7 +129,6 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
     }
   };
 
-  // 保存后端配置
   const saveBackendConfig = async () => {
     try {
       const res = await fetch(`${API_URL}/api/config`, {
@@ -149,7 +144,6 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
     }
   };
 
-  // 加载音乐列表
   const loadMusicList = async () => {
     try {
       const res = await fetch(`${API_URL}/api/music`);
@@ -162,13 +156,11 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
     }
   };
 
-  // 上传音乐文件
   const handleMusicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     setUploading(true);
-    setUploadProgress(0);
 
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
@@ -193,14 +185,12 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
       showError('上传失败，请检查后端服务是否运行');
     } finally {
       setUploading(false);
-      setUploadProgress(100);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
   };
 
-  // 删除音乐文件
   const handleDeleteMusic = async (filename: string) => {
     try {
       const res = await fetch(`${API_URL}/api/music/${encodeURIComponent(filename)}`, {
@@ -215,7 +205,6 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
     }
   };
 
-  // 触发扫描
   const handleScan = async () => {
     try {
       const res = await fetch(`${API_URL}/api/scan`, {
@@ -232,7 +221,6 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
     }
   };
 
-  // 歌单操作
   const handleCreatePlaylist = async () => {
     if (!newPlaylistName.trim()) return;
     if (!config) return;
@@ -275,7 +263,6 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
     }
   };
 
-  // 壁纸操作
   const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -320,17 +307,17 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
   ];
 
   return (
-    <div className="h-screen w-screen flex bg-[#0f0f1a]">
+    <div className="h-screen w-screen flex bg-[#f8fafc]">
       {/* 侧边栏 */}
-      <div className="w-64 bg-[#1a1f2e]/80 border-r border-white/[0.06] flex flex-col">
-        <div className="p-6 border-b border-white/[0.06]">
+      <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div className="p-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
-              <Icon name="settings" size={20} className="text-blue-400" />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Icon name="settings" size={20} className="text-blue-500" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-white">后台管理</h1>
-              <p className="text-xs text-gray-500">Navidrome</p>
+              <h1 className="text-lg font-bold text-gray-900">后台管理</h1>
+              <p className="text-xs text-gray-400">Navidrome</p>
             </div>
           </div>
         </div>
@@ -341,8 +328,8 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
               key={item.id}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                 activeTab === item.id
-                  ? 'bg-blue-500/20 text-blue-400'
-                  : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
               }`}
               onClick={() => setActiveTab(item.id)}
             >
@@ -352,16 +339,16 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-white/[0.06] space-y-2">
+        <div className="p-4 border-t border-gray-100 space-y-2">
           <button
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-white/5 hover:text-white transition-all duration-200"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-all duration-200"
             onClick={onBack}
           >
             <Icon name="chevron-up" size={18} className="rotate-[-90deg]" />
             <span className="text-sm font-medium">返回主页</span>
           </button>
           <button
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-500 transition-all duration-200"
             onClick={onLogout}
           >
             <Icon name="logout" size={18} />
@@ -372,25 +359,25 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
 
       {/* 主内容区 */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="h-16 px-8 flex items-center justify-between border-b border-white/[0.06] bg-[#1a1f2e]/30">
-          <h2 className="text-lg font-semibold text-white">
+        <div className="h-16 px-8 flex items-center justify-between border-b border-gray-100 bg-white/80 backdrop-blur-sm">
+          <h2 className="text-lg font-semibold text-gray-900">
             {sidebarItems.find(i => i.id === activeTab)?.label}
           </h2>
           
           <div className="flex items-center gap-3">
             {saveMessage && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-400 rounded-lg text-sm">
+              <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-lg text-sm">
                 <Icon name="check" size={14} />
                 {saveMessage}
               </div>
             )}
             {errorMessage && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-red-500/20 text-red-400 rounded-lg text-sm">
+              <div className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-500 rounded-lg text-sm">
                 <Icon name="x" size={14} />
                 {errorMessage}
               </div>
             )}
-            <span className="text-sm text-gray-500">{config?.username}</span>
+            <span className="text-sm text-gray-400">{config?.username}</span>
           </div>
         </div>
 
@@ -399,32 +386,31 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
           {activeTab === 'upload' && (
             <div className="max-w-4xl">
               <div className="mb-6">
-                <h3 className="text-2xl font-bold text-white mb-1">音乐上传</h3>
-                <p className="text-sm text-gray-400">上传音乐文件到服务器，自动同步到 Navidrome</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-1">音乐上传</h3>
+                <p className="text-sm text-gray-500">上传音乐文件到服务器，自动同步到 Navidrome</p>
               </div>
 
               <div className="grid grid-cols-2 gap-6">
-                {/* 上传区域 */}
-                <div className="bg-[#1a1f2e]/50 rounded-2xl border border-white/[0.06] p-6">
-                  <h4 className="text-lg font-semibold text-white mb-4">上传文件</h4>
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">上传文件</h4>
                   <div
                     className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 ${
                       uploading 
-                        ? 'border-blue-500/50 bg-blue-500/5' 
-                        : 'border-white/10 hover:border-blue-500/50 hover:bg-blue-500/5'
+                        ? 'border-blue-400 bg-blue-50' 
+                        : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50'
                     }`}
                     onClick={() => !uploading && fileInputRef.current?.click()}
                   >
                     {uploading ? (
                       <div>
-                        <div className="w-12 h-12 mx-auto mb-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                        <p className="text-blue-400">上传中...</p>
+                        <div className="w-12 h-12 mx-auto mb-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        <p className="text-blue-500">上传中...</p>
                       </div>
                     ) : (
                       <>
-                        <Icon name="music" size={48} className="mx-auto mb-3 text-gray-600" />
-                        <p className="text-gray-400 mb-1">点击选择音乐文件</p>
-                        <p className="text-xs text-gray-600">支持 MP3, FLAC, WAV, OGG, M4A, AAC, WMA</p>
+                        <Icon name="music" size={48} className="mx-auto mb-3 text-gray-300" />
+                        <p className="text-gray-500 mb-1">点击选择音乐文件</p>
+                        <p className="text-xs text-gray-400">支持 MP3, FLAC, WAV, OGG, M4A</p>
                       </>
                     )}
                   </div>
@@ -438,7 +424,7 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
                   />
                   
                   <button
-                    className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-xl transition-all duration-200"
+                    className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-all duration-200"
                     onClick={handleScan}
                   >
                     <Icon name="search" size={16} />
@@ -446,23 +432,22 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
                   </button>
                 </div>
 
-                {/* 文件统计 */}
-                <div className="bg-[#1a1f2e]/50 rounded-2xl border border-white/[0.06] p-6">
-                  <h4 className="text-lg font-semibold text-white mb-4">文件统计</h4>
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">文件统计</h4>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[#0f0f1a] rounded-xl p-4">
-                      <p className="text-sm text-gray-400 mb-1">文件数量</p>
-                      <p className="text-3xl font-bold text-white">{uploadedFiles.length}</p>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-sm text-gray-500 mb-1">文件数量</p>
+                      <p className="text-3xl font-bold text-gray-900">{uploadedFiles.length}</p>
                     </div>
-                    <div className="bg-[#0f0f1a] rounded-xl p-4">
-                      <p className="text-sm text-gray-400 mb-1">存储路径</p>
-                      <p className="text-sm text-white truncate">{backendConfig.musicFolder || '未配置'}</p>
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <p className="text-sm text-gray-500 mb-1">存储路径</p>
+                      <p className="text-sm text-gray-900 truncate">{backendConfig.musicFolder || '未配置'}</p>
                     </div>
                   </div>
                   
                   {!backendConfig.musicFolder && (
-                    <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-                      <p className="text-sm text-yellow-400">
+                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                      <p className="text-sm text-yellow-600">
                         请先在「服务器配置」中设置音乐文件夹路径
                       </p>
                     </div>
@@ -470,34 +455,28 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
                 </div>
               </div>
 
-              {/* 文件列表 */}
-              <div className="mt-6 bg-[#1a1f2e]/50 rounded-2xl border border-white/[0.06] p-6">
+              <div className="mt-6 bg-white rounded-2xl border border-gray-200 p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-semibold text-white">已上传文件</h4>
-                  <button
-                    className="text-sm text-gray-400 hover:text-white"
-                    onClick={loadMusicList}
-                  >
+                  <h4 className="text-lg font-semibold text-gray-900">已上传文件</h4>
+                  <button className="text-sm text-gray-400 hover:text-gray-600" onClick={loadMusicList}>
                     刷新
                   </button>
                 </div>
                 
                 {uploadedFiles.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    暂无文件
-                  </div>
+                  <div className="text-center py-8 text-gray-400">暂无文件</div>
                 ) : (
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {uploadedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-[#0f0f1a] rounded-lg group">
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg group hover:bg-gray-100">
                         <div className="flex items-center gap-3 min-w-0">
-                          <Icon name="music" size={16} className="text-gray-500 flex-shrink-0" />
-                          <span className="text-sm text-gray-300 truncate">{file.filename}</span>
+                          <Icon name="music" size={16} className="text-gray-400 flex-shrink-0" />
+                          <span className="text-sm text-gray-700 truncate">{file.filename}</span>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-xs text-gray-500">{formatFileSize(file.size)}</span>
+                          <span className="text-xs text-gray-400">{formatFileSize(file.size)}</span>
                           <button
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 text-gray-500 hover:text-red-400 rounded transition-all"
+                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 text-gray-400 hover:text-red-500 rounded transition-all"
                             onClick={() => handleDeleteMusic(file.filename)}
                           >
                             <Icon name="trash" size={14} />
@@ -516,8 +495,8 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
             <div className="max-w-3xl">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-2xl font-bold text-white mb-1">歌单管理</h3>
-                  <p className="text-sm text-gray-400">创建和管理你的音乐歌单</p>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-1">歌单管理</h3>
+                  <p className="text-sm text-gray-500">创建和管理你的音乐歌单</p>
                 </div>
                 <button
                   className="flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 rounded-xl transition-all duration-200 text-white text-sm font-medium hover:scale-105 active:scale-95"
@@ -530,11 +509,11 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
 
               <div className="space-y-3">
                 {playlists.length === 0 ? (
-                  <div className="text-center py-20 bg-[#1a1f2e]/50 rounded-2xl border border-white/[0.06]">
-                    <Icon name="playlist" size={64} className="mx-auto mb-4 text-gray-700" />
-                    <p className="text-gray-500 text-lg mb-2">暂无歌单</p>
+                  <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
+                    <Icon name="playlist" size={64} className="mx-auto mb-4 text-gray-200" />
+                    <p className="text-gray-400 text-lg mb-2">暂无歌单</p>
                     <button
-                      className="px-6 py-2.5 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-xl transition-all duration-200 text-sm"
+                      className="px-6 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-500 rounded-xl transition-all duration-200 text-sm"
                       onClick={() => setShowCreateDialog(true)}
                     >
                       开始创建
@@ -544,10 +523,10 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
                   playlists.map((playlist: SubsonicPlaylist) => (
                     <div
                       key={playlist.id}
-                      className="relative group bg-[#1a1f2e]/50 hover:bg-[#1a1f2e]/70 rounded-xl border border-white/[0.06] hover:border-white/[0.1] transition-all duration-200"
+                      className="relative group bg-white rounded-xl border border-gray-200 hover:border-gray-300 transition-all duration-200"
                     >
                       <div className="flex items-center gap-4 p-5">
-                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center flex-shrink-0">
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center flex-shrink-0">
                           <Icon name="music" size={24} className="text-blue-400" />
                         </div>
                         
@@ -558,23 +537,23 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
                                 type="text"
                                 value={editName}
                                 onChange={(e) => setEditName(e.target.value)}
-                                className="flex-1 px-4 py-2 bg-[#0f0f1a] rounded-lg border border-white/10 focus:outline-none focus:border-blue-400 text-white text-sm"
+                                className="flex-1 px-4 py-2 bg-gray-50 rounded-lg border border-gray-200 focus:outline-none focus:border-blue-400 text-gray-900 text-sm"
                                 autoFocus
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter') handleRenamePlaylist();
                                   if (e.key === 'Escape') setEditingPlaylist(null);
                                 }}
                               />
-                              <button className="p-2 hover:bg-green-500/20 text-green-400 rounded-lg" onClick={handleRenamePlaylist}>
+                              <button className="p-2 hover:bg-green-50 text-green-500 rounded-lg" onClick={handleRenamePlaylist}>
                                 <Icon name="check" size={16} />
                               </button>
-                              <button className="p-2 hover:bg-gray-500/20 text-gray-400 rounded-lg" onClick={() => setEditingPlaylist(null)}>
+                              <button className="p-2 hover:bg-gray-100 text-gray-400 rounded-lg" onClick={() => setEditingPlaylist(null)}>
                                 <Icon name="x" size={16} />
                               </button>
                             </div>
                           ) : (
                             <>
-                              <h4 className="text-base font-semibold text-white">{playlist.name}</h4>
+                              <h4 className="text-base font-semibold text-gray-900">{playlist.name}</h4>
                               <div className="flex items-center gap-3 mt-1 text-sm text-gray-400">
                                 <span>{playlist.songCount} 首歌曲</span>
                               </div>
@@ -585,13 +564,13 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
                         {editingPlaylist?.id !== playlist.id && (
                           <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
-                              className="p-2.5 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white"
+                              className="p-2.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600"
                               onClick={() => { setEditingPlaylist(playlist); setEditName(playlist.name); }}
                             >
                               <Icon name="edit" size={16} />
                             </button>
                             <button
-                              className="p-2.5 hover:bg-red-500/20 rounded-lg text-gray-400 hover:text-red-400"
+                              className="p-2.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500"
                               onClick={() => setDeleteConfirm(playlist.id)}
                             >
                               <Icon name="trash" size={16} />
@@ -601,12 +580,12 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
                       </div>
 
                       {deleteConfirm === playlist.id && (
-                        <div className="absolute inset-0 bg-[#0f0f1a]/95 backdrop-blur-sm rounded-xl flex items-center justify-center gap-4 z-10">
-                          <p className="text-gray-300">确定删除 <span className="font-semibold text-white">"{playlist.name}"</span>？</p>
-                          <button className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg text-sm" onClick={() => handleDeletePlaylist(playlist.id)}>
+                        <div className="absolute inset-0 bg-white/95 backdrop-blur-sm rounded-xl flex items-center justify-center gap-4 z-10">
+                          <p className="text-gray-600">确定删除 <span className="font-semibold text-gray-900">"{playlist.name}"</span>？</p>
+                          <button className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-500 rounded-lg text-sm" onClick={() => handleDeletePlaylist(playlist.id)}>
                             确认删除
                           </button>
-                          <button className="px-4 py-2 hover:bg-white/10 text-gray-400 rounded-lg text-sm" onClick={() => setDeleteConfirm(null)}>
+                          <button className="px-4 py-2 hover:bg-gray-100 text-gray-400 rounded-lg text-sm" onClick={() => setDeleteConfirm(null)}>
                             取消
                           </button>
                         </div>
@@ -622,41 +601,41 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
           {activeTab === 'wallpaper' && (
             <div className="max-w-3xl">
               <div className="mb-6">
-                <h3 className="text-2xl font-bold text-white mb-1">壁纸设置</h3>
-                <p className="text-sm text-gray-400">自定义背景图片</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-1">壁纸设置</h3>
+                <p className="text-sm text-gray-500">自定义背景图片</p>
               </div>
 
               <div className="space-y-6">
-                <div className="bg-[#1a1f2e]/50 rounded-2xl border border-white/[0.06] p-6">
-                  <h4 className="text-lg font-semibold text-white mb-4">上传壁纸</h4>
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">上传壁纸</h4>
                   <div
-                    className="border-2 border-dashed border-white/10 hover:border-blue-500/50 rounded-xl p-8 text-center cursor-pointer transition-all duration-200"
+                    className="border-2 border-dashed border-gray-200 hover:border-blue-400 rounded-xl p-8 text-center cursor-pointer transition-all duration-200 hover:bg-blue-50"
                     onClick={() => bgInputRef.current?.click()}
                   >
-                    <Icon name="image" size={48} className="mx-auto mb-3 text-gray-600" />
-                    <p className="text-gray-400 mb-1">点击选择图片</p>
-                    <p className="text-xs text-gray-600">支持 JPG, PNG, GIF, WebP</p>
+                    <Icon name="image" size={48} className="mx-auto mb-3 text-gray-300" />
+                    <p className="text-gray-500 mb-1">点击选择图片</p>
+                    <p className="text-xs text-gray-400">支持 JPG, PNG, GIF, WebP</p>
                   </div>
                   <input ref={bgInputRef} type="file" accept="image/*" className="hidden" onChange={handleBgUpload} />
                 </div>
 
-                <div className="bg-[#1a1f2e]/50 rounded-2xl border border-white/[0.06] p-6">
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h4 className="text-lg font-semibold text-white">当前壁纸</h4>
+                    <h4 className="text-lg font-semibold text-gray-900">当前壁纸</h4>
                     {customBg && (
-                      <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-400 hover:bg-red-500/10 rounded-lg" onClick={handleRemoveBg}>
+                      <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 rounded-lg" onClick={handleRemoveBg}>
                         <Icon name="trash" size={12} />
                         移除
                       </button>
                     )}
                   </div>
-                  <div className="aspect-video rounded-xl overflow-hidden bg-[#0f0f1a] border border-white/[0.06]">
+                  <div className="aspect-video rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
                     {customBg ? (
                       <img src={customBg} alt="壁纸" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center">
-                        <Icon name="image" size={48} className="text-gray-700 mb-2" />
-                        <p className="text-gray-500">使用默认背景</p>
+                        <Icon name="image" size={48} className="text-gray-200 mb-2" />
+                        <p className="text-gray-400">使用默认背景</p>
                       </div>
                     )}
                   </div>
@@ -669,63 +648,63 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
           {activeTab === 'settings' && (
             <div className="max-w-2xl">
               <div className="mb-6">
-                <h3 className="text-2xl font-bold text-white mb-1">服务器配置</h3>
-                <p className="text-sm text-gray-400">配置音乐文件夹和 Navidrome 连接</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-1">服务器配置</h3>
+                <p className="text-sm text-gray-500">配置音乐文件夹和 Navidrome 连接</p>
               </div>
 
               <div className="space-y-6">
-                <div className="bg-[#1a1f2e]/50 rounded-2xl border border-white/[0.06] p-6">
-                  <h4 className="text-lg font-semibold text-white mb-4">音乐文件夹</h4>
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">音乐文件夹</h4>
                   <input
                     type="text"
                     value={backendConfig.musicFolder}
                     onChange={(e) => setBackendConfig({ ...backendConfig, musicFolder: e.target.value })}
                     placeholder="/path/to/music"
-                    className="w-full px-4 py-3 bg-[#0f0f1a] rounded-xl border border-white/10 focus:outline-none focus:border-blue-400 text-white placeholder-gray-600"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 text-gray-900 placeholder-gray-400"
                   />
-                  <p className="mt-2 text-xs text-gray-500">Navidrome 扫描的音乐文件夹路径</p>
+                  <p className="mt-2 text-xs text-gray-400">Navidrome 扫描的音乐文件夹路径</p>
                 </div>
 
-                <div className="bg-[#1a1f2e]/50 rounded-2xl border border-white/[0.06] p-6">
-                  <h4 className="text-lg font-semibold text-white mb-4">Navidrome 连接</h4>
+                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Navidrome 连接</h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1">服务器地址</label>
+                      <label className="block text-sm text-gray-500 mb-1">服务器地址</label>
                       <input
                         type="text"
                         value={backendConfig.navidromeUrl}
                         onChange={(e) => setBackendConfig({ ...backendConfig, navidromeUrl: e.target.value })}
                         placeholder="http://192.168.1.100:4533"
-                        className="w-full px-4 py-3 bg-[#0f0f1a] rounded-xl border border-white/10 focus:outline-none focus:border-blue-400 text-white placeholder-gray-600"
+                        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 text-gray-900 placeholder-gray-400"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-400 mb-1">用户名</label>
+                      <label className="block text-sm text-gray-500 mb-1">用户名</label>
                       <input
                         type="text"
                         value={backendConfig.navidromeUser}
                         onChange={(e) => setBackendConfig({ ...backendConfig, navidromeUser: e.target.value })}
                         placeholder="admin"
-                        className="w-full px-4 py-3 bg-[#0f0f1a] rounded-xl border border-white/10 focus:outline-none focus:border-blue-400 text-white placeholder-gray-600"
+                        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 text-gray-900 placeholder-gray-400"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm text-gray-400 mb-1">Token</label>
+                        <label className="block text-sm text-gray-500 mb-1">Token</label>
                         <input
                           type="password"
                           value={backendConfig.navidromeToken}
                           onChange={(e) => setBackendConfig({ ...backendConfig, navidromeToken: e.target.value })}
-                          className="w-full px-4 py-3 bg-[#0f0f1a] rounded-xl border border-white/10 focus:outline-none focus:border-blue-400 text-white"
+                          className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 text-gray-900"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm text-gray-400 mb-1">Salt</label>
+                        <label className="block text-sm text-gray-500 mb-1">Salt</label>
                         <input
                           type="password"
                           value={backendConfig.navidromeSalt}
                           onChange={(e) => setBackendConfig({ ...backendConfig, navidromeSalt: e.target.value })}
-                          className="w-full px-4 py-3 bg-[#0f0f1a] rounded-xl border border-white/10 focus:outline-none focus:border-blue-400 text-white"
+                          className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 text-gray-900"
                         />
                       </div>
                     </div>
@@ -746,29 +725,29 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
           {activeTab === 'about' && (
             <div className="max-w-3xl">
               <div className="mb-6">
-                <h3 className="text-2xl font-bold text-white mb-1">关于</h3>
-                <p className="text-sm text-gray-400">应用信息</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-1">关于</h3>
+                <p className="text-sm text-gray-500">应用信息</p>
               </div>
 
-              <div className="bg-[#1a1f2e]/50 rounded-2xl border border-white/[0.06] p-8">
+              <div className="bg-white rounded-2xl border border-gray-200 p-8">
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                     <Icon name="music" size={32} className="text-white" />
                   </div>
                   <div>
-                    <h4 className="text-2xl font-bold text-white">Navidrome</h4>
-                    <p className="text-gray-400">现代化的 Navidrome 音乐播放器</p>
+                    <h4 className="text-2xl font-bold text-gray-900">Navidrome</h4>
+                    <p className="text-gray-500">现代化的 Navidrome 音乐播放器</p>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-[#0f0f1a] rounded-xl p-4">
-                    <p className="text-sm text-gray-400 mb-1">版本</p>
-                    <p className="text-white font-semibold">1.0.0</p>
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-sm text-gray-500 mb-1">版本</p>
+                    <p className="text-gray-900 font-semibold">1.0.0</p>
                   </div>
-                  <div className="bg-[#0f0f1a] rounded-xl p-4">
-                    <p className="text-sm text-gray-400 mb-1">GitHub</p>
-                    <a href="https://github.com/SnarkD2001/Navidrome" target="_blank" rel="noopener" className="text-blue-400 hover:underline">
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <p className="text-sm text-gray-500 mb-1">GitHub</p>
+                    <a href="https://github.com/SnarkD2001/Navidrome" target="_blank" rel="noopener" className="text-blue-500 hover:underline">
                       SnarkD2001/Navidrome
                     </a>
                   </div>
@@ -781,15 +760,15 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
 
       {/* 新建歌单对话框 */}
       {showCreateDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-96 bg-[#1a1f2e]/95 backdrop-blur-2xl rounded-2xl border border-white/[0.08] shadow-2xl p-8">
-            <h3 className="text-xl font-bold text-white mb-6">新建歌单</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="w-96 bg-white rounded-2xl border border-gray-200 shadow-2xl p-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-6">新建歌单</h3>
             <input
               type="text"
               value={newPlaylistName}
               onChange={(e) => setNewPlaylistName(e.target.value)}
               placeholder="输入歌单名称"
-              className="w-full px-4 py-3 bg-[#0f0f1a] rounded-xl border border-white/10 focus:outline-none focus:border-blue-400 text-white placeholder-gray-600"
+              className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:border-blue-400 text-gray-900 placeholder-gray-400"
               autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleCreatePlaylist();
@@ -797,7 +776,7 @@ export default function AdminPage({ onBack, onLogout }: AdminPageProps) {
               }}
             />
             <div className="flex justify-end gap-3 mt-6">
-              <button className="px-5 py-2.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors" onClick={() => setShowCreateDialog(false)}>
+              <button className="px-5 py-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors" onClick={() => setShowCreateDialog(false)}>
                 取消
               </button>
               <button className="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 rounded-xl transition-colors text-white font-medium" onClick={handleCreatePlaylist}>
