@@ -510,7 +510,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         ctx.stroke();
         ctx.shadowColor = 'transparent';
         
-        // 音波动画
         const waveX = 14;
         const waveY = imgHeight - 20;
         ctx.fillStyle = '#3b82f6';
@@ -524,7 +523,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       // 信息区域 - 左侧文字背景
       ctx.fillStyle = '#f8fafc';
       ctx.beginPath();
-      // 左侧圆角：左下角圆角，右下角直角
       ctx.moveTo(0, imgHeight);
       ctx.lineTo(CARD_WIDTH - heartWidth, imgHeight);
       ctx.lineTo(CARD_WIDTH - heartWidth, CARD_HEIGHT);
@@ -536,7 +534,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       // 右侧红心按钮背景
       ctx.fillStyle = '#f1f5f9';
       ctx.beginPath();
-      // 右侧圆角：右下角圆角
       ctx.moveTo(CARD_WIDTH - heartWidth, imgHeight);
       ctx.lineTo(CARD_WIDTH, imgHeight);
       ctx.lineTo(CARD_WIDTH, CARD_HEIGHT - radius);
@@ -549,7 +546,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
       ctx.fillRect(12, imgHeight, CARD_WIDTH - heartWidth - 12, 1);
       
-      // 标题 - 垂直居中于上半部分
+      // 标题
       ctx.fillStyle = '#0f172a';
       ctx.font = '600 12px Inter, system-ui, sans-serif';
       ctx.textAlign = 'left';
@@ -557,23 +554,21 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       const title = card.track.title.length > 12 ? card.track.title.slice(0, 12) + '…' : card.track.title;
       ctx.fillText(title, 12, imgHeight + infoHeight * 0.35);
       
-      // 艺术家 - 垂直居中于下半部分
+      // 艺术家
       ctx.fillStyle = '#64748b';
       ctx.font = '11px Inter, system-ui, sans-serif';
       const artist = card.track.artist.length > 14 ? card.track.artist.slice(0, 14) + '…' : card.track.artist;
       ctx.fillText(artist, 12, imgHeight + infoHeight * 0.65);
       
-      // 红心按钮 - 垂直居中于整个信息区域
+      // 红心按钮 - 垂直居中
       const heartCenterX = CARD_WIDTH - heartWidth / 2;
       const heartCenterY = imgHeight + infoHeight / 2;
       const heartSize = 18;
       
-      // 计算心形绘制的起始位置（使心形居中）
       const heartDrawX = heartCenterX;
       const heartDrawY = heartCenterY - heartSize / 2;
       
       if (isLiked) {
-        // 已喜欢 - 红色填充心形
         ctx.fillStyle = '#ef4444';
         ctx.shadowColor = 'rgba(239, 68, 68, 0.4)';
         ctx.shadowBlur = 8;
@@ -586,7 +581,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         ctx.fill();
         ctx.shadowColor = 'transparent';
       } else {
-        // 未喜欢 - 灰色空心心形（默认显示）
         ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -635,26 +629,35 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     return -1;
   }, [cardPositions]);
 
+  // 简化的红心按钮点击检测
   const isClickOnHeart = useCallback((clientX: number, clientY: number, cardIndex: number): boolean => {
     if (cardIndex < 0) return false;
     
     const card = cardPositions[cardIndex];
     const { x: scrollX, y: scrollY } = scrollRef.current;
-    const scale = cardScalesRef.current[cardIndex] || 1;
     
-    const centerX = card.x + CARD_WIDTH / 2 - scrollX;
-    const centerY = card.y + CARD_HEIGHT / 2 - scrollY;
+    // 计算卡片在屏幕上的位置
+    const cardScreenX = card.x - scrollX;
+    const cardScreenY = card.y - scrollY;
     
-    // 红心按钮位置（右下角，占据两行，垂直居中）
+    // 红心按钮在卡片内的相对位置（右下角）
     const heartWidth = 44;
     const infoHeight = 40;
-    const heartX = centerX + (CARD_WIDTH / 2 - heartWidth / 2) * scale;
-    const heartY = centerY + (CARD_HEIGHT / 2 - infoHeight / 2 + infoHeight / 2) * scale;
+    const imgHeight = CARD_HEIGHT - infoHeight;
     
-    const dx = clientX - heartX;
-    const dy = clientY - heartY;
+    // 红心按钮在卡片内的区域
+    const heartLeft = cardScreenX + CARD_WIDTH - heartWidth;
+    const heartTop = cardScreenY + imgHeight;
+    const heartRight = cardScreenX + CARD_WIDTH;
+    const heartBottom = cardScreenY + CARD_HEIGHT;
     
-    return Math.sqrt(dx * dx + dy * dy) < 22 * scale;
+    // 检查点击是否在红心按钮区域内
+    return (
+      clientX >= heartLeft &&
+      clientX <= heartRight &&
+      clientY >= heartTop &&
+      clientY <= heartBottom
+    );
   }, [cardPositions]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
