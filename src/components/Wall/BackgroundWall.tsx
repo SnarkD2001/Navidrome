@@ -424,6 +424,8 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       
       const radius = 16;
       const imgHeight = CARD_HEIGHT - 40;
+      const infoHeight = 40;
+      const heartWidth = 44;
       
       // 卡片阴影
       ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
@@ -519,44 +521,56 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         }
       }
       
-      // 信息区域背景 - 左侧部分（文字区域）
-      const infoHeight = 40;
-      const heartWidth = 44; // 红心按钮区域宽度
-      
-      // 左侧文字背景
+      // 信息区域 - 左侧文字背景
       ctx.fillStyle = '#f8fafc';
       ctx.beginPath();
-      ctx.roundRect(0, imgHeight, CARD_WIDTH - heartWidth, infoHeight, [0, 0, 0, radius]);
+      // 左侧圆角：左下角圆角，右下角直角
+      ctx.moveTo(0, imgHeight);
+      ctx.lineTo(CARD_WIDTH - heartWidth, imgHeight);
+      ctx.lineTo(CARD_WIDTH - heartWidth, CARD_HEIGHT);
+      ctx.lineTo(radius, CARD_HEIGHT);
+      ctx.quadraticCurveTo(0, CARD_HEIGHT, 0, CARD_HEIGHT - radius);
+      ctx.lineTo(0, imgHeight);
       ctx.fill();
       
       // 右侧红心按钮背景
       ctx.fillStyle = '#f1f5f9';
       ctx.beginPath();
-      ctx.roundRect(CARD_WIDTH - heartWidth, imgHeight, heartWidth, infoHeight, [0, 0, radius, 0]);
+      // 右侧圆角：右下角圆角
+      ctx.moveTo(CARD_WIDTH - heartWidth, imgHeight);
+      ctx.lineTo(CARD_WIDTH, imgHeight);
+      ctx.lineTo(CARD_WIDTH, CARD_HEIGHT - radius);
+      ctx.quadraticCurveTo(CARD_WIDTH, CARD_HEIGHT, CARD_WIDTH - radius, CARD_HEIGHT);
+      ctx.lineTo(CARD_WIDTH - heartWidth, CARD_HEIGHT);
+      ctx.lineTo(CARD_WIDTH - heartWidth, imgHeight);
       ctx.fill();
       
       // 分隔线
       ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
       ctx.fillRect(12, imgHeight, CARD_WIDTH - heartWidth - 12, 1);
       
-      // 标题
+      // 标题 - 垂直居中于上半部分
       ctx.fillStyle = '#0f172a';
       ctx.font = '600 12px Inter, system-ui, sans-serif';
       ctx.textAlign = 'left';
-      ctx.textBaseline = 'top';
+      ctx.textBaseline = 'middle';
       const title = card.track.title.length > 12 ? card.track.title.slice(0, 12) + '…' : card.track.title;
-      ctx.fillText(title, 12, imgHeight + 10);
+      ctx.fillText(title, 12, imgHeight + infoHeight * 0.35);
       
-      // 艺术家
+      // 艺术家 - 垂直居中于下半部分
       ctx.fillStyle = '#64748b';
       ctx.font = '11px Inter, system-ui, sans-serif';
       const artist = card.track.artist.length > 14 ? card.track.artist.slice(0, 14) + '…' : card.track.artist;
-      ctx.fillText(artist, 12, imgHeight + 26);
+      ctx.fillText(artist, 12, imgHeight + infoHeight * 0.65);
       
-      // 红心按钮 - 占据两行高度，默认显示
-      const heartX = CARD_WIDTH - heartWidth / 2;
-      const heartY = imgHeight + infoHeight / 2;
+      // 红心按钮 - 垂直居中于整个信息区域
+      const heartCenterX = CARD_WIDTH - heartWidth / 2;
+      const heartCenterY = imgHeight + infoHeight / 2;
       const heartSize = 18;
+      
+      // 计算心形绘制的起始位置（使心形居中）
+      const heartDrawX = heartCenterX;
+      const heartDrawY = heartCenterY - heartSize / 2;
       
       if (isLiked) {
         // 已喜欢 - 红色填充心形
@@ -564,11 +578,11 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         ctx.shadowColor = 'rgba(239, 68, 68, 0.4)';
         ctx.shadowBlur = 8;
         ctx.beginPath();
-        ctx.moveTo(heartX, heartY + heartSize * 0.3);
-        ctx.bezierCurveTo(heartX, heartY, heartX - heartSize * 0.5, heartY, heartX - heartSize * 0.5, heartY + heartSize * 0.3);
-        ctx.bezierCurveTo(heartX - heartSize * 0.5, heartY + heartSize * 0.6, heartX, heartY + heartSize * 0.8, heartX, heartY + heartSize);
-        ctx.bezierCurveTo(heartX, heartY + heartSize * 0.8, heartX + heartSize * 0.5, heartY + heartSize * 0.6, heartX + heartSize * 0.5, heartY + heartSize * 0.3);
-        ctx.bezierCurveTo(heartX + heartSize * 0.5, heartY, heartX, heartY, heartX, heartY + heartSize * 0.3);
+        ctx.moveTo(heartDrawX, heartDrawY + heartSize * 0.3);
+        ctx.bezierCurveTo(heartDrawX, heartDrawY, heartDrawX - heartSize * 0.5, heartDrawY, heartDrawX - heartSize * 0.5, heartDrawY + heartSize * 0.3);
+        ctx.bezierCurveTo(heartDrawX - heartSize * 0.5, heartDrawY + heartSize * 0.6, heartDrawX, heartDrawY + heartSize * 0.8, heartDrawX, heartDrawY + heartSize);
+        ctx.bezierCurveTo(heartDrawX, heartDrawY + heartSize * 0.8, heartDrawX + heartSize * 0.5, heartDrawY + heartSize * 0.6, heartDrawX + heartSize * 0.5, heartDrawY + heartSize * 0.3);
+        ctx.bezierCurveTo(heartDrawX + heartSize * 0.5, heartDrawY, heartDrawX, heartDrawY, heartDrawX, heartDrawY + heartSize * 0.3);
         ctx.fill();
         ctx.shadowColor = 'transparent';
       } else {
@@ -576,11 +590,11 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.moveTo(heartX, heartY + heartSize * 0.3);
-        ctx.bezierCurveTo(heartX, heartY, heartX - heartSize * 0.5, heartY, heartX - heartSize * 0.5, heartY + heartSize * 0.3);
-        ctx.bezierCurveTo(heartX - heartSize * 0.5, heartY + heartSize * 0.6, heartX, heartY + heartSize * 0.8, heartX, heartY + heartSize);
-        ctx.bezierCurveTo(heartX, heartY + heartSize * 0.8, heartX + heartSize * 0.5, heartY + heartSize * 0.6, heartX + heartSize * 0.5, heartY + heartSize * 0.3);
-        ctx.bezierCurveTo(heartX + heartSize * 0.5, heartY, heartX, heartY, heartX, heartY + heartSize * 0.3);
+        ctx.moveTo(heartDrawX, heartDrawY + heartSize * 0.3);
+        ctx.bezierCurveTo(heartDrawX, heartDrawY, heartDrawX - heartSize * 0.5, heartDrawY, heartDrawX - heartSize * 0.5, heartDrawY + heartSize * 0.3);
+        ctx.bezierCurveTo(heartDrawX - heartSize * 0.5, heartDrawY + heartSize * 0.6, heartDrawX, heartDrawY + heartSize * 0.8, heartDrawX, heartDrawY + heartSize);
+        ctx.bezierCurveTo(heartDrawX, heartDrawY + heartSize * 0.8, heartDrawX + heartSize * 0.5, heartDrawY + heartSize * 0.6, heartDrawX + heartSize * 0.5, heartDrawY + heartSize * 0.3);
+        ctx.bezierCurveTo(heartDrawX + heartSize * 0.5, heartDrawY, heartDrawX, heartDrawY, heartDrawX, heartDrawY + heartSize * 0.3);
         ctx.stroke();
       }
       
@@ -631,10 +645,11 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     const centerX = card.x + CARD_WIDTH / 2 - scrollX;
     const centerY = card.y + CARD_HEIGHT / 2 - scrollY;
     
-    // 红心按钮位置（右下角，占据两行）
+    // 红心按钮位置（右下角，占据两行，垂直居中）
     const heartWidth = 44;
+    const infoHeight = 40;
     const heartX = centerX + (CARD_WIDTH / 2 - heartWidth / 2) * scale;
-    const heartY = centerY + (CARD_HEIGHT / 2 - 20) * scale; // 信息区域中间
+    const heartY = centerY + (CARD_HEIGHT / 2 - infoHeight / 2 + infoHeight / 2) * scale;
     
     const dx = clientX - heartX;
     const dy = clientY - heartY;
