@@ -519,39 +519,50 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         }
       }
       
-      // 信息区域背景
+      // 信息区域背景 - 左侧部分（文字区域）
+      const infoHeight = 40;
+      const heartWidth = 44; // 红心按钮区域宽度
+      
+      // 左侧文字背景
       ctx.fillStyle = '#f8fafc';
       ctx.beginPath();
-      ctx.roundRect(0, imgHeight, CARD_WIDTH, 40, [0, 0, radius, radius]);
+      ctx.roundRect(0, imgHeight, CARD_WIDTH - heartWidth, infoHeight, [0, 0, 0, radius]);
+      ctx.fill();
+      
+      // 右侧红心按钮背景
+      ctx.fillStyle = '#f1f5f9';
+      ctx.beginPath();
+      ctx.roundRect(CARD_WIDTH - heartWidth, imgHeight, heartWidth, infoHeight, [0, 0, radius, 0]);
       ctx.fill();
       
       // 分隔线
       ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
-      ctx.fillRect(12, imgHeight, CARD_WIDTH - 24, 1);
+      ctx.fillRect(12, imgHeight, CARD_WIDTH - heartWidth - 12, 1);
       
       // 标题
       ctx.fillStyle = '#0f172a';
       ctx.font = '600 12px Inter, system-ui, sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      const title = card.track.title.length > 14 ? card.track.title.slice(0, 14) + '…' : card.track.title;
+      const title = card.track.title.length > 12 ? card.track.title.slice(0, 12) + '…' : card.track.title;
       ctx.fillText(title, 12, imgHeight + 10);
       
       // 艺术家
       ctx.fillStyle = '#64748b';
       ctx.font = '11px Inter, system-ui, sans-serif';
-      const artist = card.track.artist.length > 17 ? card.track.artist.slice(0, 17) + '…' : card.track.artist;
+      const artist = card.track.artist.length > 14 ? card.track.artist.slice(0, 14) + '…' : card.track.artist;
       ctx.fillText(artist, 12, imgHeight + 26);
       
-      // 红心按钮 - 右下角
-      const heartX = CARD_WIDTH - 24;
-      const heartY = CARD_HEIGHT - 16;
-      const heartSize = 14;
+      // 红心按钮 - 占据两行高度，默认显示
+      const heartX = CARD_WIDTH - heartWidth / 2;
+      const heartY = imgHeight + infoHeight / 2;
+      const heartSize = 18;
       
       if (isLiked) {
+        // 已喜欢 - 红色填充心形
         ctx.fillStyle = '#ef4444';
         ctx.shadowColor = 'rgba(239, 68, 68, 0.4)';
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 8;
         ctx.beginPath();
         ctx.moveTo(heartX, heartY + heartSize * 0.3);
         ctx.bezierCurveTo(heartX, heartY, heartX - heartSize * 0.5, heartY, heartX - heartSize * 0.5, heartY + heartSize * 0.3);
@@ -560,8 +571,9 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         ctx.bezierCurveTo(heartX + heartSize * 0.5, heartY, heartX, heartY, heartX, heartY + heartSize * 0.3);
         ctx.fill();
         ctx.shadowColor = 'transparent';
-      } else if (isHovered) {
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+      } else {
+        // 未喜欢 - 灰色空心心形（默认显示）
+        ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(heartX, heartY + heartSize * 0.3);
@@ -619,14 +631,15 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     const centerX = card.x + CARD_WIDTH / 2 - scrollX;
     const centerY = card.y + CARD_HEIGHT / 2 - scrollY;
     
-    // 右下角红心位置
-    const heartX = centerX + (CARD_WIDTH / 2 - 24) * scale;
-    const heartY = centerY + (CARD_HEIGHT / 2 - 16) * scale;
+    // 红心按钮位置（右下角，占据两行）
+    const heartWidth = 44;
+    const heartX = centerX + (CARD_WIDTH / 2 - heartWidth / 2) * scale;
+    const heartY = centerY + (CARD_HEIGHT / 2 - 20) * scale; // 信息区域中间
     
     const dx = clientX - heartX;
     const dy = clientY - heartY;
     
-    return Math.sqrt(dx * dx + dy * dy) < 20 * scale;
+    return Math.sqrt(dx * dx + dy * dy) < 22 * scale;
   }, [cardPositions]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
