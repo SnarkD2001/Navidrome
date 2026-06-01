@@ -222,6 +222,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     if (!config) return;
     
     const isLiked = likedTracks.has(track.id);
+    console.log('Toggle like:', track.title, 'isLiked:', isLiked);
     
     try {
       if (isLiked) {
@@ -619,45 +620,76 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     
     for (let i = cardPositions.length - 1; i >= 0; i--) {
       const card = cardPositions[i];
-      if (
-        worldX >= card.x && worldX <= card.x + CARD_WIDTH &&
-        worldY >= card.y && worldY <= card.y + CARD_HEIGHT
-      ) {
+      
+      // 计算卡片中心
+      const cardCenterX = card.x + CARD_WIDTH / 2;
+      const cardCenterY = card.y + CARD_HEIGHT / 2;
+      
+      // 将鼠标坐标转换到卡片的本地坐标系（考虑旋转）
+      const dx = worldX - cardCenterX;
+      const dy = worldY - cardCenterY;
+      const angle = -(card.rotation * Math.PI) / 180;
+      const localX = dx * Math.cos(angle) - dy * Math.sin(angle) + CARD_WIDTH / 2;
+      const localY = dx * Math.sin(angle) + dy * Math.cos(angle) + CARD_HEIGHT / 2;
+      
+      // 检查是否在卡片范围内
+      if (localX >= 0 && localX <= CARD_WIDTH && localY >= 0 && localY <= CARD_HEIGHT) {
         return i;
       }
     }
     return -1;
   }, [cardPositions]);
 
-  // 简化的红心按钮点击检测
+  // 红心按钮点击检测 - 使用卡片本地坐标
   const isClickOnHeart = useCallback((clientX: number, clientY: number, cardIndex: number): boolean => {
     if (cardIndex < 0) return false;
     
     const card = cardPositions[cardIndex];
     const { x: scrollX, y: scrollY } = scrollRef.current;
     
-    // 计算卡片在屏幕上的位置
-    const cardScreenX = card.x - scrollX;
-    const cardScreenY = card.y - scrollY;
+    // 转换为世界坐标
+    const worldX = clientX + scrollX;
+    const worldY = clientY + scrollY;
     
-    // 红心按钮在卡片内的相对位置（右下角）
+    // 计算卡片中心
+    const cardCenterX = card.x + CARD_WIDTH / 2;
+    const cardCenterY = card.y + CARD_HEIGHT / 2;
+    
+    // 将鼠标坐标转换到卡片的本地坐标系（考虑旋转）
+    const dx = worldX - cardCenterX;
+    const dy = worldY - cardCenterY;
+    const angle = -(card.rotation * Math.PI) / 180;
+    const localX = dx * Math.cos(angle) - dy * Math.sin(angle) + CARD_WIDTH / 2;
+    const localY = dx * Math.sin(angle) + dy * Math.cos(angle) + CARD_HEIGHT / 2;
+    
+    // 红心按钮在卡片内的相对位置
     const heartWidth = 44;
     const infoHeight = 40;
     const imgHeight = CARD_HEIGHT - infoHeight;
     
-    // 红心按钮在卡片内的区域
-    const heartLeft = cardScreenX + CARD_WIDTH - heartWidth;
-    const heartTop = cardScreenY + imgHeight;
-    const heartRight = cardScreenX + CARD_WIDTH;
-    const heartBottom = cardScreenY + CARD_HEIGHT;
+    // 红心按钮在本地坐标中的区域
+    const heartLeft = CARD_WIDTH - heartWidth;
+    const heartTop = imgHeight;
+    const heartRight = CARD_WIDTH;
+    const heartBottom = CARD_HEIGHT;
     
     // 检查点击是否在红心按钮区域内
-    return (
-      clientX >= heartLeft &&
-      clientX <= heartRight &&
-      clientY >= heartTop &&
-      clientY <= heartBottom
+    const isInHeart = (
+      localX >= heartLeft &&
+      localX <= heartRight &&
+      localY >= heartTop &&
+      localY <= heartBottom
     );
+    
+    console.log('Heart click check:', {
+      clientX, clientY,
+      worldX, worldY,
+      localX, localY,
+      heartLeft, heartTop, heartRight, heartBottom,
+      isInHeart
+    });
+    
+    return isInHeart;
   }, [cardPositions]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -693,7 +725,10 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       if (dx < 5 && dy < 5) {
         const cardIndex = getCardAtPosition(e.clientX, e.clientY);
         if (cardIndex >= 0) {
-          if (isClickOnHeart(e.clientX, e.clientY, cardIndex)) {
+          const isHeart = isClickOnHeart(e.clientX, e.clientY, cardIndex);
+          console.log('Click on card:', cardIndex, 'isHeart:', isHeart);
+          
+          if (isHeart) {
             toggleLike(cardPositions[cardIndex].track, e);
           } else {
             play(cardPositions[cardIndex].track, tracks);
