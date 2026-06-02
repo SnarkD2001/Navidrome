@@ -165,6 +165,13 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
   const mousePosRef = useRef({ x: -1000, y: -1000 });
   const smoothMousePosRef = useRef({ x: -1000, y: -1000 });
   const cardScalesRef = useRef<number[]>([]);
+  // 预排序的卡片索引（按 y 坐标，只在 positions 变化时重排）
+  const sortedIndicesRef = useRef<number[]>([]);
+  // 渐变缓存
+  const gradientsRef = useRef<{ grad1: CanvasGradient; grad2: CanvasGradient; grad3: CanvasGradient } | null>(null);
+  const gradientSizeRef = useRef({ w: 0, h: 0 });
+  // Canvas 尺寸缓存（避免每帧设置 canvas.width/height）
+  const canvasSizeRef = useRef({ w: 0, h: 0, dpr: 1 });
   // 红心动画状态: Map<cardIndex, { startTime, type }>
   const heartAnimRef = useRef<Map<number, { startTime: number; type: 'like' | 'unlike' }>>(new Map());
   // 粒子效果: { x, y, vx, vy, life, maxLife, size, color }
@@ -254,6 +261,11 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     });
 
     cardScalesRef.current = new Array(positions.length).fill(1);
+
+    // 预排序：按 y 坐标，只在 positions 变化时执行一次
+    sortedIndicesRef.current = positions
+      .map((_, i) => i)
+      .sort((a, b) => positions[a].y - positions[b].y);
 
     return {
       cardPositions: positions,
@@ -346,22 +358,62 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
 
   const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
-  const drawCanvas = useCallback(() => {
+  // 确保 canvas 尺寸和渐变缓存正确（只在 resize 时调用）
+  const ensureCanvasSize = useCallback(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    
+    if (!canvas) return null;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    
+    if (!ctx) return null;
+
     const dpr = window.devicePixelRatio || 1;
     const width = window.innerWidth;
     const height = window.innerHeight;
+    const size = canvasSizeRef.current;
+
+    // 只在尺寸真正变化时重设（这会清空画布 + 重置状态）
+    if (size.w !== width || size.h !== height || size.dpr !== dpr) {
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.scale(dpr, dpr);
+      canvasSizeRef.current = { w: width, h: height, dpr };
+      gradientsRef.current = null; // 强制重建渐变
+    }
+
+    // 缓存渐变（只在尺寸变化时重建）
+    if (!gradientsRef.current || gradientSizeRef.current.w !== width || gradientSizeRef.current.h !== height) {
+      const grad1 = ctx.createLinearGradient(0, 0, width, height);
+      grad1.addColorStop(0, '#f8fafc');
+      grad1.addColorStop(0.5, '#f1f5f9');
+      grad1.addColorStop(1, '#e2e8f0');
+
+      const grad2 = ctx.createRadialGradient(width * 0.2, height * 0.2, 0, width * 0.2, height * 0.2, width * 0.5);
+      grad2.addColorStop(0, 'rgba(59, 130, 246, 0.08)');
+      grad2.addColorStop(1, 'transparent');
+
+      const grad3 = ctx.createRadialGradient(width * 0.8, height * 0.8, 0, width * 0.8, height * 0.8, width * 0.4);
+      grad3.addColorStop(0, 'rgba(139, 92, 246, 0.06)');
+      grad3.addColorStop(1, 'transparent');
+
+      gradientsRef.current = { grad1, grad2, grad3 };
+      gradientSizeRef.current = { w: width, h: height };
+    }
+
+    return ctx;
+  }, []);
+
+  const drawCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = ensureCanvasSize();
+    if (!ctx) return;
+
+    const width = canvasSizeRef.current.w;
+    const height = canvasSizeRef.current.h;
     
-    canvas.width = width * dpr;
-    canvas.height = height * dpr;
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-    ctx.scale(dpr, dpr);
+    // 用 clearRect 替代重设 canvas.width（不清除状态，不触发全量重绘）
+    ctx.clearRect(0, 0, width, height);
     
     const scrollLerp = 0.12;
     scrollRef.current.x += (targetScrollRef.current.x - scrollRef.current.x) * scrollLerp;
@@ -371,7 +423,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     smoothMousePosRef.current.x += (mousePosRef.current.x - smoothMousePosRef.current.x) * mouseLerp;
     smoothMousePosRef.current.y += (mousePosRef.current.y - smoothMousePosRef.current.y) * mouseLerp;
     
-    // 背景
+    // 背景（使用缓存的渐变）
     if (customBgImageRef.current && customBgImageRef.current.complete && customBgImageRef.current.naturalWidth > 0) {
       const img = customBgImageRef.current;
       const imgRatio = img.width / img.height;
@@ -393,67 +445,50 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
       ctx.fillRect(0, 0, width, height);
-    } else {
-      const gradient = ctx.createLinearGradient(0, 0, width, height);
-      gradient.addColorStop(0, '#f8fafc');
-      gradient.addColorStop(0.5, '#f1f5f9');
-      gradient.addColorStop(1, '#e2e8f0');
-      ctx.fillStyle = gradient;
+    } else if (gradientsRef.current) {
+      ctx.fillStyle = gradientsRef.current.grad1;
       ctx.fillRect(0, 0, width, height);
-      
-      const gradient2 = ctx.createRadialGradient(width * 0.2, height * 0.2, 0, width * 0.2, height * 0.2, width * 0.5);
-      gradient2.addColorStop(0, 'rgba(59, 130, 246, 0.08)');
-      gradient2.addColorStop(1, 'transparent');
-      ctx.fillStyle = gradient2;
+      ctx.fillStyle = gradientsRef.current.grad2;
       ctx.fillRect(0, 0, width, height);
-      
-      const gradient3 = ctx.createRadialGradient(width * 0.8, height * 0.8, 0, width * 0.8, height * 0.8, width * 0.4);
-      gradient3.addColorStop(0, 'rgba(139, 92, 246, 0.06)');
-      gradient3.addColorStop(1, 'transparent');
-      ctx.fillStyle = gradient3;
+      ctx.fillStyle = gradientsRef.current.grad3;
       ctx.fillRect(0, 0, width, height);
     }
     
     const { x: scrollX, y: scrollY } = scrollRef.current;
     const cache = imageCacheRef.current;
     const mouse = smoothMousePosRef.current;
-    
-    const sortedCards = cardPositions
-      .map((card, index) => ({ ...card, index }))
-      .sort((a, b) => a.y - b.y);
-    
     const scaleLerp = 0.15;
     
-    sortedCards.forEach(card => {
+    // 使用预排序的索引，不再每帧 map + sort
+    const sorted = sortedIndicesRef.current;
+    
+    for (let si = 0; si < sorted.length; si++) {
+      const i = sorted[si];
+      const card = cardPositions[i];
       const centerX = card.x + CARD_WIDTH / 2 - scrollX;
       const centerY = card.y + CARD_HEIGHT / 2 - scrollY;
       
+      // scale 计算（合并到绘制循环，不再单独遍历）
       const dx = mouse.x - centerX;
       const dy = mouse.y - centerY;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      
       let targetScale = 1;
       if (distance < MAGNETIC_RANGE) {
         const factor = 1 - (distance / MAGNETIC_RANGE);
         targetScale = 1 + (MAX_SCALE - 1) * easeOutCubic(factor);
       }
-      
-      const currentScale = cardScalesRef.current[card.index] || 1;
-      cardScalesRef.current[card.index] = currentScale + (targetScale - currentScale) * scaleLerp;
-    });
-    
-    sortedCards.forEach(card => {
-      const scale = cardScalesRef.current[card.index] || 1;
-      const centerX = card.x + CARD_WIDTH / 2 - scrollX;
-      const centerY = card.y + CARD_HEIGHT / 2 - scrollY;
+      const currentScale = cardScalesRef.current[i] || 1;
+      const scale = currentScale + (targetScale - currentScale) * scaleLerp;
+      cardScalesRef.current[i] = scale;
       
       const scaledWidth = CARD_WIDTH * scale;
       const scaledHeight = CARD_HEIGHT * scale;
       const x = centerX - scaledWidth / 2;
       const y = centerY - scaledHeight / 2;
       
+      // 视锥剔除
       if (x + scaledWidth < -50 || x > width + 50 || y + scaledHeight < -50 || y > height + 50) {
-        return;
+        continue;
       }
       
       const isPlaying = currentTrack?.id === card.track.id;
@@ -609,7 +644,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       const heartSize = 18;
       
       // 弹跳动画
-      const anim = heartAnimRef.current.get(card.index);
+      const anim = heartAnimRef.current.get(i);
       let heartScale = 1;
       if (anim) {
         const elapsed = (performance.now() - anim.startTime) / 1000;
@@ -617,7 +652,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
           // damped spring: peak 1.5 at t≈0.08, then bounce back
           heartScale = 1 + 0.5 * Math.exp(-12 * elapsed) * Math.sin(25 * elapsed);
         } else {
-          heartAnimRef.current.delete(card.index);
+          heartAnimRef.current.delete(i);
         }
       }
       
