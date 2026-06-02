@@ -690,7 +690,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       ctx.restore();
       
       ctx.restore();
-    });
+    }
 
     // 绘制粒子
     const particles = particlesRef.current;
