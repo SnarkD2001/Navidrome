@@ -154,6 +154,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
   const [customBg, setCustomBg] = useState<string | null>(null);
   const [bgLoaded, setBgLoaded] = useState(false);
   const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
+  const [searchValue, setSearchValue] = useState('');
   
   const scrollRef = useRef({ x: 0, y: 0 });
   const targetScrollRef = useRef({ x: 0, y: 0 });
@@ -890,6 +891,33 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
                 </div>
               </>
             )}
+          </div>
+
+          <div className="w-px h-6 bg-gray-200" />
+
+          {/* Search */}
+          <div className="relative">
+            <Icon name="search" size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              data-search-input
+              type="text"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const q = searchValue.trim();
+                  if (q) {
+                    useWallStore.getState().setSearchQuery(q);
+                    useWallStore.getState().setSource('search');
+                  }
+                }
+                e.stopPropagation();
+              }}
+              placeholder="搜索..."
+              className="w-40 pl-8 pr-2 py-1.5 text-xs bg-gray-100/80 rounded-lg border border-transparent
+                         focus:outline-none focus:border-blue-300 focus:bg-white focus:w-56
+                         placeholder:text-gray-400 transition-all duration-200 text-gray-700"
+            />
           </div>
 
           <div className="w-px h-6 bg-gray-200" />
