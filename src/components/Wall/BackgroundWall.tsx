@@ -225,67 +225,6 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     }).catch(() => setBgLoaded(true));
   }, []);
 
-  // 爆心粒子生成
-  const spawnHeartParticles = useCallback((cardIndex: number) => {
-    const card = cardPositions[cardIndex];
-    if (!card) return;
-    const { x: scrollX, y: scrollY } = scrollRef.current;
-    const scale = cardScalesRef.current[cardIndex] || 1;
-    const infoHeight = 40;
-    const heartWidth = 44;
-    const imgHeight = CARD_HEIGHT - infoHeight;
-    // 红心在世界坐标中的中心
-    const heartWorldX = card.x + CARD_WIDTH - heartWidth / 2;
-    const heartWorldY = card.y + imgHeight + infoHeight / 2;
-
-    const colors = ['#ef4444', '#f87171', '#fca5a5', '#fb923c', '#f43f5e'];
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 * i) / 8 + (Math.random() - 0.5) * 0.5;
-      const speed = 1.5 + Math.random() * 2.5;
-      particlesRef.current.push({
-        x: heartWorldX - scrollX,
-        y: heartWorldY - scrollY,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 2, // 向上偏移
-        life: 1,
-        maxLife: 0.6 + Math.random() * 0.3,
-        size: 4 + Math.random() * 5,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        rotation: Math.random() * Math.PI * 2,
-        rotSpeed: (Math.random() - 0.5) * 0.3,
-      });
-    }
-  }, [cardPositions]);
-
-  const toggleLike = useCallback(async (track: SubsonicSong, e: React.MouseEvent, cardIndex?: number) => {
-    e.stopPropagation();
-    if (!config) return;
-    
-    const isLiked = likedTracks.has(track.id);
-    
-    // 触发弹跳动画
-    if (cardIndex !== undefined) {
-      heartAnimRef.current.set(cardIndex, { startTime: performance.now(), type: isLiked ? 'unlike' : 'like' });
-      if (!isLiked) spawnHeartParticles(cardIndex);
-    }
-    
-    try {
-      if (isLiked) {
-        await unstar(config, track.id);
-        setLikedTracks(prev => {
-          const next = new Set(prev);
-          next.delete(track.id);
-          return next;
-        });
-      } else {
-        await star(config, track.id);
-        setLikedTracks(prev => new Set(prev).add(track.id));
-      }
-    } catch (err) {
-      console.error('Failed to toggle like:', err);
-    }
-  }, [config, likedTracks, spawnHeartParticles]);
-
   const CARD_WIDTH = 180;
   const CARD_HEIGHT = 220;
   const MIN_DISTANCE = 300;
@@ -322,6 +261,64 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       canvasHeight: height,
     };
   }, [tracks]);
+
+  // 爆心粒子生成
+  const spawnHeartParticles = useCallback((cardIndex: number) => {
+    const card = cardPositions[cardIndex];
+    if (!card) return;
+    const { x: scrollX, y: scrollY } = scrollRef.current;
+    const infoHeight = 40;
+    const heartWidth = 44;
+    const imgHeight = CARD_HEIGHT - infoHeight;
+    const heartWorldX = card.x + CARD_WIDTH - heartWidth / 2;
+    const heartWorldY = card.y + imgHeight + infoHeight / 2;
+
+    const colors = ['#ef4444', '#f87171', '#fca5a5', '#fb923c', '#f43f5e'];
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 * i) / 8 + (Math.random() - 0.5) * 0.5;
+      const speed = 1.5 + Math.random() * 2.5;
+      particlesRef.current.push({
+        x: heartWorldX - scrollX,
+        y: heartWorldY - scrollY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 2,
+        life: 1,
+        maxLife: 0.6 + Math.random() * 0.3,
+        size: 4 + Math.random() * 5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.3,
+      });
+    }
+  }, [cardPositions]);
+
+  const toggleLike = useCallback(async (track: SubsonicSong, e: React.MouseEvent, cardIndex?: number) => {
+    e.stopPropagation();
+    if (!config) return;
+    
+    const isLiked = likedTracks.has(track.id);
+    
+    if (cardIndex !== undefined) {
+      heartAnimRef.current.set(cardIndex, { startTime: performance.now(), type: isLiked ? 'unlike' : 'like' });
+      if (!isLiked) spawnHeartParticles(cardIndex);
+    }
+    
+    try {
+      if (isLiked) {
+        await unstar(config, track.id);
+        setLikedTracks(prev => {
+          const next = new Set(prev);
+          next.delete(track.id);
+          return next;
+        });
+      } else {
+        await star(config, track.id);
+        setLikedTracks(prev => new Set(prev).add(track.id));
+      }
+    } catch (err) {
+      console.error('Failed to toggle like:', err);
+    }
+  }, [config, likedTracks, spawnHeartParticles]);
 
   useEffect(() => {
     if (!config) return;
