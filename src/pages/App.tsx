@@ -8,6 +8,7 @@ import MiniPlayer from '../components/Player/MiniPlayer';
 import FullPlayer from '../components/Player/FullPlayer';
 import { usePlayerStore } from '../store/player';
 import { usePlaylistStore } from '../store/playlist';
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,6 +27,7 @@ function AppContent() {
   const [currentView, setCurrentView] = useState<AppView>('main');
   const { isFullPlayerOpen } = usePlayerStore();
   const { fetchPlaylists } = usePlaylistStore();
+  useKeyboardShortcuts();
 
   useEffect(() => {
     // 检查 URL 路径

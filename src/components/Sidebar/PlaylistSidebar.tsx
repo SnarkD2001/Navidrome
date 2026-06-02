@@ -91,11 +91,12 @@ const PlaylistItem: React.FC<PlaylistItemProps> = ({ playlist, isActive, onSelec
 export default function PlaylistSidebar() {
   const { playlists, activePlaylist, viewMode } = usePlaylistStore();
   const { fetchPlaylistTracks, createNewPlaylist, renamePlaylist, removePlaylist } = usePlaylists();
-  const { setSource } = useWallStore();
+  const { setSource, setSearchQuery, source, searchQuery } = useWallStore();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [renamingPlaylist, setRenamingPlaylist] = useState<SubsonicPlaylist | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [searchValue, setSearchValue] = useState('');
 
   const getConfig = (): ServerConfig | null => {
     const configStr = localStorage.getItem('navidrome-server');
@@ -139,6 +140,14 @@ export default function PlaylistSidebar() {
     }
   };
 
+  const handleSearch = () => {
+    const q = searchValue.trim();
+    if (!q) return;
+    setSearchQuery(q);
+    setSource('search');
+    usePlaylistStore.getState().setViewMode('all-tracks');
+  };
+
   return (
     <div className="sidebar flex flex-col">
       {/* Header */}
@@ -147,6 +156,50 @@ export default function PlaylistSidebar() {
           <Icon name="music" size={24} className="text-[rgb(var(--accent))]" />
           <h1 className="text-xl font-bold">Navidrome</h1>
         </div>
+      </div>
+
+      {/* Search */}
+      <div className="px-4 py-3 border-b border-white/5">
+        <div className="relative">
+          <Icon name="search" size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--text-secondary))]/50 pointer-events-none" />
+          <input
+            data-search-input
+            type="text"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSearch();
+              // 阻止 Space 等冒泡到全局快捷键
+              e.stopPropagation();
+            }}
+            placeholder="搜索曲目..."
+            className="w-full pl-9 pr-14 py-2 text-sm bg-white/5 rounded-xl border border-white/5
+                       focus:outline-none focus:border-[rgb(var(--accent))]/50 focus:bg-white/8
+                       placeholder:text-[rgb(var(--text-secondary))]/30 transition-all"
+          />
+          <kbd className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-[rgb(var(--text-secondary))]/40
+                          bg-white/5 px-1.5 py-0.5 rounded border border-white/5 pointer-events-none select-none">
+            ⌘K
+          </kbd>
+        </div>
+        {/* 搜索结果提示 */}
+        {source === 'search' && (
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-xs text-[rgb(var(--accent))] truncate">
+              🔍 {searchQuery}
+            </span>
+            <button
+              className="text-xs text-[rgb(var(--text-secondary))] hover:text-white transition-colors"
+              onClick={() => {
+                setSearchValue('');
+                setSource('all');
+                usePlaylistStore.getState().setViewMode('all-tracks');
+              }}
+            >
+              清除
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Fixed entries */}

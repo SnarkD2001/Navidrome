@@ -122,6 +122,21 @@ export function usePlayer() {
     }
   }, [setCurrentTime]);
 
+  // Listen for keyboard seek events (from useKeyboardShortcuts)
+  useEffect(() => {
+    const handleSeekEvent = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (!detail || !soundRef.current) return;
+      const current = soundRef.current.seek() as number;
+      const dur = soundRef.current.duration();
+      const newTime = Math.max(0, Math.min(dur, current + detail.delta));
+      soundRef.current.seek(newTime);
+      setCurrentTime(newTime);
+    };
+    window.addEventListener('nd-seek', handleSeekEvent);
+    return () => window.removeEventListener('nd-seek', handleSeekEvent);
+  }, [setCurrentTime]);
+
   // MediaSession API
   useEffect(() => {
     if (!('mediaSession' in navigator)) return;
