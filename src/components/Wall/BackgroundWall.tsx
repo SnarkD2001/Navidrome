@@ -165,6 +165,13 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
   const mousePosRef = useRef({ x: -1000, y: -1000 });
   const smoothMousePosRef = useRef({ x: -1000, y: -1000 });
   const cardScalesRef = useRef<number[]>([]);
+  // 红心动画状态: Map<cardIndex, { startTime, type }>
+  const heartAnimRef = useRef<Map<number, { startTime: number; type: 'like' | 'unlike' }>>(new Map());
+  // 粒子效果: { x, y, vx, vy, life, maxLife, size, color }
+  const particlesRef = useRef<Array<{
+    x: number; y: number; vx: number; vy: number;
+    life: number; maxLife: number; size: number; color: string; rotation: number; rotSpeed: number;
+  }>>([]);
   
   const imageCacheRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const customBgImageRef = useRef<HTMLImageElement | null>(null);
@@ -218,12 +225,49 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     }).catch(() => setBgLoaded(true));
   }, []);
 
-  const toggleLike = useCallback(async (track: SubsonicSong, e: React.MouseEvent) => {
+  // 爆心粒子生成
+  const spawnHeartParticles = useCallback((cardIndex: number) => {
+    const card = cardPositions[cardIndex];
+    if (!card) return;
+    const { x: scrollX, y: scrollY } = scrollRef.current;
+    const scale = cardScalesRef.current[cardIndex] || 1;
+    const infoHeight = 40;
+    const heartWidth = 44;
+    const imgHeight = CARD_HEIGHT - infoHeight;
+    // 红心在世界坐标中的中心
+    const heartWorldX = card.x + CARD_WIDTH - heartWidth / 2;
+    const heartWorldY = card.y + imgHeight + infoHeight / 2;
+
+    const colors = ['#ef4444', '#f87171', '#fca5a5', '#fb923c', '#f43f5e'];
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 * i) / 8 + (Math.random() - 0.5) * 0.5;
+      const speed = 1.5 + Math.random() * 2.5;
+      particlesRef.current.push({
+        x: heartWorldX - scrollX,
+        y: heartWorldY - scrollY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 2, // 向上偏移
+        life: 1,
+        maxLife: 0.6 + Math.random() * 0.3,
+        size: 4 + Math.random() * 5,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.3,
+      });
+    }
+  }, [cardPositions]);
+
+  const toggleLike = useCallback(async (track: SubsonicSong, e: React.MouseEvent, cardIndex?: number) => {
     e.stopPropagation();
     if (!config) return;
     
     const isLiked = likedTracks.has(track.id);
-    console.log('Toggle like:', track.title, 'isLiked:', isLiked);
+    
+    // 触发弹跳动画
+    if (cardIndex !== undefined) {
+      heartAnimRef.current.set(cardIndex, { startTime: performance.now(), type: isLiked ? 'unlike' : 'like' });
+      if (!isLiked) spawnHeartParticles(cardIndex);
+    }
     
     try {
       if (isLiked) {
@@ -240,7 +284,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     } catch (err) {
       console.error('Failed to toggle like:', err);
     }
-  }, [config, likedTracks]);
+  }, [config, likedTracks, spawnHeartParticles]);
 
   const CARD_WIDTH = 180;
   const CARD_HEIGHT = 220;
@@ -567,8 +611,26 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
       const heartCenterY = imgHeight + infoHeight / 2;
       const heartSize = 18;
       
+      // 弹跳动画
+      const anim = heartAnimRef.current.get(card.index);
+      let heartScale = 1;
+      if (anim) {
+        const elapsed = (performance.now() - anim.startTime) / 1000;
+        if (elapsed < 0.5) {
+          // damped spring: peak 1.5 at t≈0.08, then bounce back
+          heartScale = 1 + 0.5 * Math.exp(-12 * elapsed) * Math.sin(25 * elapsed);
+        } else {
+          heartAnimRef.current.delete(card.index);
+        }
+      }
+      
       const heartDrawX = heartCenterX;
       const heartDrawY = heartCenterY - heartSize / 2;
+      
+      ctx.save();
+      ctx.translate(heartCenterX, heartCenterY);
+      ctx.scale(heartScale, heartScale);
+      ctx.translate(-heartCenterX, -heartCenterY);
       
       if (isLiked) {
         ctx.fillStyle = '#ef4444';
@@ -593,9 +655,45 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
         ctx.bezierCurveTo(heartDrawX + heartSize * 0.5, heartDrawY, heartDrawX, heartDrawY, heartDrawX, heartDrawY + heartSize * 0.3);
         ctx.stroke();
       }
+      ctx.restore();
       
       ctx.restore();
     });
+
+    // 绘制粒子
+    const particles = particlesRef.current;
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      const dt = 1 / 60; // approx frame time
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.08; // gravity
+      p.life -= dt / p.maxLife;
+      p.rotation += p.rotSpeed;
+
+      if (p.life <= 0) {
+        particles.splice(i, 1);
+        continue;
+      }
+
+      const alpha = Math.min(1, p.life * 2); // fade out in last 50%
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rotation);
+      ctx.fillStyle = p.color;
+      // 画小爱心
+      const s = p.size * (0.5 + p.life * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(0, s * 0.3);
+      ctx.bezierCurveTo(0, 0, -s * 0.5, 0, -s * 0.5, s * 0.3);
+      ctx.bezierCurveTo(-s * 0.5, s * 0.6, 0, s * 0.8, 0, s);
+      ctx.bezierCurveTo(0, s * 0.8, s * 0.5, s * 0.6, s * 0.5, s * 0.3);
+      ctx.bezierCurveTo(s * 0.5, 0, 0, 0, 0, s * 0.3);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
   }, [cardPositions, currentTrack, likedTracks]);
 
   useEffect(() => {
@@ -735,7 +833,7 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
           console.log('Click on card:', cardIndex, 'isHeart:', isHeart);
           
           if (isHeart) {
-            toggleLike(cardPositions[cardIndex].track, e);
+            toggleLike(cardPositions[cardIndex].track, e, cardIndex);
           } else {
             play(cardPositions[cardIndex].track, tracks);
           }
