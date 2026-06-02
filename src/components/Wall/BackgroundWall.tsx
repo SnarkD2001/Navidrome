@@ -7,6 +7,7 @@ import { useWall } from '../../hooks/useWall';
 import { getCoverArtUrl, star, unstar, createPlaylist, getPlaylists } from '../../api/subsonic';
 import Icon from '../common/Icon';
 import ContextMenu from './ContextMenu';
+import CardExpandedPlayer from '../Player/CardExpandedPlayer';
 
 interface CardPosition {
   x: number;
@@ -155,6 +156,11 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
   const [bgLoaded, setBgLoaded] = useState(false);
   const [likedTracks, setLikedTracks] = useState<Set<string>>(new Set());
   const [searchValue, setSearchValue] = useState('');
+  // 展开播放器状态
+  const [expandedCard, setExpandedCard] = useState<{
+    track: SubsonicSong;
+    origin: { x: number; y: number; w: number; h: number };
+  } | null>(null);
   
   const scrollRef = useRef({ x: 0, y: 0 });
   const targetScrollRef = useRef({ x: 0, y: 0 });
@@ -867,7 +873,19 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
           if (isHeart) {
             toggleLike(cardPositions[cardIndex].track, e, cardIndex);
           } else {
-            play(cardPositions[cardIndex].track, tracks);
+            const card = cardPositions[cardIndex];
+            const scale = cardScalesRef.current[cardIndex] || 1;
+            const { x: scrollX, y: scrollY } = scrollRef.current;
+            const scaledW = CARD_WIDTH * scale;
+            const scaledH = CARD_HEIGHT * scale;
+            // 卡片在屏幕上的位置
+            const screenX = card.x + CARD_WIDTH / 2 - scrollX - scaledW / 2;
+            const screenY = card.y + CARD_HEIGHT / 2 - scrollY - scaledH / 2;
+            setExpandedCard({
+              track: card.track,
+              origin: { x: screenX, y: screenY, w: scaledW, h: scaledH },
+            });
+            play(card.track, tracks);
           }
         }
       }
@@ -1073,6 +1091,14 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
           y={contextMenu.y}
           track={contextMenu.track}
           onClose={() => setContextMenu(null)}
+        />
+      )}
+
+      {expandedCard && (
+        <CardExpandedPlayer
+          track={expandedCard.track}
+          origin={expandedCard.origin}
+          onClose={() => setExpandedCard(null)}
         />
       )}
     </div>
