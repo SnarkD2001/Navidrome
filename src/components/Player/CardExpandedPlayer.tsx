@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { SubsonicSong, ServerConfig } from '../../api/types';
 import { usePlayer } from '../../hooks/usePlayer';
 import { getLyrics, getCoverArtUrl } from '../../api/subsonic';
@@ -74,7 +75,6 @@ export default function CardExpandedPlayer({ track, origin, onClose }: CardExpan
   const config = getConfig();
   const coverUrl = config ? getCoverArtUrl(config, track.coverArt, 600) : '';
 
-  // 居中卡片尺寸
   const cardW = Math.min(1100, window.innerWidth * 0.82);
   const cardH = Math.min(680, window.innerHeight * 0.75);
   const cardX = (window.innerWidth - cardW) / 2;
@@ -113,21 +113,26 @@ export default function CardExpandedPlayer({ track, origin, onClose }: CardExpan
     };
   }
 
-  return (
-    <div className="fixed inset-0 z-50" onClick={handleClose}>
-      {/* 透明遮罩：只拦截点击，不遮挡艺术墙 */}
-      <div className="absolute inset-0" />
-
-      {/* 展开的卡片 — 毛玻璃效果 */}
+  return createPortal(
+    <>
+      {/* 透明点击遮罩：覆盖全屏但完全透明，只拦截点击 */}
       <div
-        className="absolute overflow-hidden"
+        style={{ position: 'fixed', inset: 0, zIndex: 50, background: 'transparent' }}
+        onClick={handleClose}
+      />
+
+      {/* 展开的卡片 — 毛玻璃 */}
+      <div
         style={{
-          ...cardStyle,
+          position: 'fixed',
+          zIndex: 51,
+          overflow: 'hidden',
           backdropFilter: 'blur(40px) saturate(1.6)',
           WebkitBackdropFilter: 'blur(40px) saturate(1.6)',
-          background: 'rgba(255, 255, 255, 0.12)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
+          background: 'rgba(255, 255, 255, 0.15)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
           boxShadow: '0 25px 60px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+          ...cardStyle,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -141,7 +146,7 @@ export default function CardExpandedPlayer({ track, origin, onClose }: CardExpan
 
         {/* 内容 */}
         <div className="relative z-10 flex items-stretch h-full p-8 gap-8">
-          {/* 左侧：封面 + 信息 + 控制 */}
+          {/* 左侧 */}
           <div className="flex flex-col items-center justify-center gap-5 flex-shrink-0" style={{ width: '38%' }}>
             <div className="w-full aspect-square max-w-[320px] rounded-2xl overflow-hidden shadow-xl">
               {coverUrl ? (
@@ -158,7 +163,6 @@ export default function CardExpandedPlayer({ track, origin, onClose }: CardExpan
               <p className="text-xs text-white/40 mt-0.5 truncate">{track.artist} — {track.album}</p>
             </div>
 
-            {/* 进度条 */}
             <div className="w-full max-w-[280px]">
               <div className="h-1 bg-white/10 rounded-full cursor-pointer group" onClick={handleProgressClick}>
                 <div
@@ -174,7 +178,6 @@ export default function CardExpandedPlayer({ track, origin, onClose }: CardExpan
               </div>
             </div>
 
-            {/* 控制 */}
             <div className="flex items-center gap-4">
               <button
                 className={`p-1 rounded-full transition-colors ${mode !== 'sequential' ? 'text-blue-300' : 'text-white/30 hover:text-white'}`}
@@ -209,6 +212,6 @@ export default function CardExpandedPlayer({ track, origin, onClose }: CardExpan
           </div>
         </div>
       </div>
-    </div>
-  );
+    </>
+  , document.body);
 }
