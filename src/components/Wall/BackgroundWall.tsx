@@ -621,17 +621,20 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     
     for (let i = cardPositions.length - 1; i >= 0; i--) {
       const card = cardPositions[i];
+      const scale = cardScalesRef.current[i] || 1;
       
-      // 计算卡片中心
+      // 计算卡片中心（屏幕坐标，和绘制一致）
       const cardCenterX = card.x + CARD_WIDTH / 2;
       const cardCenterY = card.y + CARD_HEIGHT / 2;
       
-      // 将鼠标坐标转换到卡片的本地坐标系（考虑旋转）
+      // 将鼠标坐标转换到卡片的本地坐标系（考虑旋转 + 缩放）
       const dx = worldX - cardCenterX;
       const dy = worldY - cardCenterY;
       const angle = -(card.rotation * Math.PI) / 180;
-      const localX = dx * Math.cos(angle) - dy * Math.sin(angle) + CARD_WIDTH / 2;
-      const localY = dx * Math.sin(angle) + dy * Math.cos(angle) + CARD_HEIGHT / 2;
+      const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle);
+      const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle);
+      const localX = rotatedX / scale + CARD_WIDTH / 2;
+      const localY = rotatedY / scale + CARD_HEIGHT / 2;
       
       // 检查是否在卡片范围内
       if (localX >= 0 && localX <= CARD_WIDTH && localY >= 0 && localY <= CARD_HEIGHT) {
@@ -641,11 +644,12 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     return -1;
   }, [cardPositions]);
 
-  // 红心按钮点击检测 - 使用卡片本地坐标
+  // 红心按钮点击检测 - 使用卡片本地坐标（考虑旋转 + 缩放）
   const isClickOnHeart = useCallback((clientX: number, clientY: number, cardIndex: number): boolean => {
     if (cardIndex < 0) return false;
     
     const card = cardPositions[cardIndex];
+    const scale = cardScalesRef.current[cardIndex] || 1;
     const { x: scrollX, y: scrollY } = scrollRef.current;
     
     // 转换为世界坐标
@@ -656,12 +660,14 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     const cardCenterX = card.x + CARD_WIDTH / 2;
     const cardCenterY = card.y + CARD_HEIGHT / 2;
     
-    // 将鼠标坐标转换到卡片的本地坐标系（考虑旋转）
+    // 将鼠标坐标转换到卡片的本地坐标系（考虑旋转 + 缩放）
     const dx = worldX - cardCenterX;
     const dy = worldY - cardCenterY;
     const angle = -(card.rotation * Math.PI) / 180;
-    const localX = dx * Math.cos(angle) - dy * Math.sin(angle) + CARD_WIDTH / 2;
-    const localY = dx * Math.sin(angle) + dy * Math.cos(angle) + CARD_HEIGHT / 2;
+    const rotatedX = dx * Math.cos(angle) - dy * Math.sin(angle);
+    const rotatedY = dx * Math.sin(angle) + dy * Math.cos(angle);
+    const localX = rotatedX / scale + CARD_WIDTH / 2;
+    const localY = rotatedY / scale + CARD_HEIGHT / 2;
     
     // 红心按钮在卡片内的相对位置
     const heartWidth = 44;
@@ -683,9 +689,8 @@ export default function BackgroundWall({ onLogout }: BackgroundWallProps) {
     );
     
     console.log('Heart click check:', {
-      clientX, clientY,
-      worldX, worldY,
-      localX, localY,
+      clientX, clientY, worldX, worldY, scale,
+      localX: localX.toFixed(1), localY: localY.toFixed(1),
       heartLeft, heartTop, heartRight, heartBottom,
       isInHeart
     });
