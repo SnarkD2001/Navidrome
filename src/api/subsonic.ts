@@ -43,11 +43,11 @@ export function getCoverArtUrl(config: ServerConfig, coverArtId: string, size = 
   return `${config.url}/rest/getCoverArt?${params.toString()}`;
 }
 
-export function getStreamUrl(config: ServerConfig, songId: string): string {
+export function getStreamUrl(config: ServerConfig, songId: string, options?: { format?: string; maxBitRate?: number }): string {
   const params = buildParams(config);
   params.set('id', songId);
-  params.set('format', 'mp3'); // force transcoding to browser-compatible format
-  params.set('maxBitRate', '320');
+  if (options?.format) params.set('format', options.format);
+  if (options?.maxBitRate) params.set('maxBitRate', options.maxBitRate.toString());
   return `${config.url}/rest/stream?${params.toString()}`;
 }
 

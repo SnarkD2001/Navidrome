@@ -56,6 +56,7 @@ export function usePlayer() {
     }
 
     const url = getStreamUrl(config, currentTrack.id);
+    let retriedWithMp3 = false;
 
     const sound = new Howl({
       src: [url],
@@ -69,7 +70,28 @@ export function usePlayer() {
         next();
       },
       onloaderror: (_id, error) => {
-        console.error('Load error:', error);
+        // 如果原生格式加载失败，降级到 mp3 转码重试
+        if (!retriedWithMp3) {
+          retriedWithMp3 = true;
+          console.warn('Native format failed, retrying with mp3 transcoding...');
+          const mp3Url = getStreamUrl(config, currentTrack.id, { format: 'mp3', maxBitRate: 320 });
+          sound.unload();
+          const fallback = new Howl({
+            src: [mp3Url],
+            html5: true,
+            volume,
+            onplay: () => {
+              setDuration(fallback.duration());
+              updateTime();
+            },
+            onend: () => next(),
+            onloaderror: () => console.error('MP3 fallback also failed:', error),
+          });
+          soundRef.current = fallback;
+          fallback.play();
+        } else {
+          console.error('Load error:', error);
+        }
       },
     });
 
