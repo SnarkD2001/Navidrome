@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SubsonicSong, ServerConfig } from '../../api/types';
 import { usePlayer } from '../../hooks/usePlayer';
 import { getLyrics, getCoverArtUrl } from '../../api/subsonic';
@@ -13,7 +13,6 @@ interface CardExpandedPlayerProps {
 
 export default function CardExpandedPlayer({ track, origin, onClose }: CardExpandedPlayerProps) {
   const {
-    currentTrack,
     isPlaying,
     volume,
     currentTime,
@@ -29,210 +28,206 @@ export default function CardExpandedPlayer({ track, origin, onClose }: CardExpan
 
   const [lyrics, setLyrics] = useState('');
   const [phase, setPhase] = useState<'entering' | 'visible' | 'exiting'>('entering');
-  const overlayRef = useRef<HTMLDivElement>(null);
 
   const getConfig = (): ServerConfig | null => {
     const configStr = localStorage.getItem('navidrome-server');
     return configStr ? JSON.parse(configStr) : null;
   };
 
-  // Fetch lyrics
   useEffect(() => {
     const config = getConfig();
     if (!config) return;
     getLyrics(config, track.artist, track.title).then(setLyrics);
   }, [track.id]);
 
-  // Enter animation
   useEffect(() => {
     const timer = setTimeout(() => setPhase('visible'), 30);
     return () => clearTimeout(timer);
   }, []);
 
+  // Escape 关闭
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
+
   const handleClose = () => {
     setPhase('exiting');
-    setTimeout(onClose, 400);
+    setTimeout(onClose, 350);
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    return `${m}:${Math.floor(s % 60).toString().padStart(2, '0')}`;
   };
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    seek((x / rect.width) * duration);
+    seek(((e.clientX - rect.left) / rect.width) * duration);
   };
 
-  const modeIcons: Record<string, string> = {
-    'sequential': 'repeat',
-    'shuffle': 'shuffle',
-    'repeat-one': 'repeat-one',
-  };
-
+  const modeIcons: Record<string, string> = { sequential: 'repeat', shuffle: 'shuffle', 'repeat-one': 'repeat-one' };
   const cycleMode = () => {
     const modes: Array<'sequential' | 'shuffle' | 'repeat-one'> = ['sequential', 'shuffle', 'repeat-one'];
     setMode(modes[(modes.indexOf(mode) + 1) % modes.length]);
   };
 
-  const getVolumeIcon = () => {
-    if (volume === 0) return 'volume-mute';
-    if (volume < 0.5) return 'volume-low';
-    return 'volume';
-  };
-
   const config = getConfig();
   const coverUrl = config ? getCoverArtUrl(config, track.coverArt, 600) : '';
-  const bgUrl = config ? getCoverArtUrl(config, track.coverArt, 300) : '';
 
-  // 动画样式
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  // 展开卡片的目标尺寸（居中，约 80vw x 75vh）
+  const cardW = Math.min(1100, window.innerWidth * 0.82);
+  const cardH = Math.min(680, window.innerHeight * 0.75);
+  const cardX = (window.innerWidth - cardW) / 2;
+  const cardY = (window.innerHeight - cardH) / 2;
 
-  // 从卡片中心计算展开起点
-  const originCenterX = origin.x + origin.w / 2;
-  const originCenterY = origin.y + origin.h / 2;
-
-  let animStyle: React.CSSProperties = {};
+  // 动画：从原始卡片位置 → 居中大卡片
+  let cardStyle: React.CSSProperties;
   if (phase === 'entering') {
-    // 从卡片位置开始
-    const scaleX = origin.w / vw;
-    const scaleY = origin.h / vh;
-    const tx = originCenterX - vw / 2;
-    const ty = originCenterY - vh / 2;
-    animStyle = {
-      transform: `translate(${tx}px, ${ty}px) scale(${scaleX}, ${scaleY})`,
-      opacity: 0.5,
+    cardStyle = {
+      left: origin.x,
+      top: origin.y,
+      width: origin.w,
+      height: origin.h,
+      opacity: 0.6,
       borderRadius: '16px',
       transition: 'none',
     };
   } else if (phase === 'visible') {
-    animStyle = {
-      transform: 'translate(0, 0) scale(1)',
+    cardStyle = {
+      left: cardX,
+      top: cardY,
+      width: cardW,
+      height: cardH,
       opacity: 1,
-      borderRadius: '0px',
-      transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, border-radius 0.4s ease',
+      borderRadius: '24px',
+      transition: 'all 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
     };
   } else {
-    // exiting - 缩回卡片位置
-    const scaleX = origin.w / vw;
-    const scaleY = origin.h / vh;
-    const tx = originCenterX - vw / 2;
-    const ty = originCenterY - vh / 2;
-    animStyle = {
-      transform: `translate(${tx}px, ${ty}px) scale(${scaleX}, ${scaleY})`,
+    cardStyle = {
+      left: origin.x,
+      top: origin.y,
+      width: origin.w,
+      height: origin.h,
       opacity: 0,
       borderRadius: '16px',
-      transition: 'transform 0.35s cubic-bezier(0.55, 0, 1, 0.45), opacity 0.25s ease, border-radius 0.3s ease',
+      transition: 'all 0.3s cubic-bezier(0.55, 0, 1, 0.45)',
     };
   }
 
   return (
-    <div
-      ref={overlayRef}
-      className="fixed inset-0 z-50 overflow-hidden"
-      style={animStyle}
-    >
-      {/* 背景模糊 */}
+    <div className="fixed inset-0 z-50" onClick={handleClose}>
+      {/* 毛玻璃背景 */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 backdrop-blur-2xl bg-black/40"
         style={{
-          backgroundImage: bgUrl ? `url(${bgUrl})` : undefined,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'blur(80px) brightness(0.15)',
-          transform: 'scale(1.3)',
+          opacity: phase === 'entering' ? 0 : 1,
+          transition: phase === 'exiting' ? 'opacity 0.3s ease' : 'opacity 0.4s ease',
         }}
       />
-      <div className="absolute inset-0 bg-black/70" />
 
-      {/* 关闭按钮 */}
-      <button
-        className="absolute top-5 right-5 z-20 text-white/50 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors"
-        onClick={handleClose}
+      {/* 展开的卡片 */}
+      <div
+        className="absolute overflow-hidden shadow-2xl"
+        style={cardStyle}
+        onClick={(e) => e.stopPropagation()}
       >
-        <Icon name="chevron-down" size={28} />
-      </button>
-
-      {/* 主内容：左封面 + 右歌词 */}
-      <div className="relative z-10 flex items-center justify-center h-full px-16 gap-12">
-        {/* 左侧：封面 + 信息 + 控制 */}
-        <div className="flex flex-col items-center gap-6 flex-shrink-0" style={{ maxWidth: '40vh' }}>
-          {/* 封面 */}
+        {/* 卡片内部模糊背景 */}
+        {coverUrl && (
           <div
-            className="rounded-2xl overflow-hidden shadow-2xl"
-            style={{ width: 'min(360px, 38vh)', height: 'min(360px, 38vh)' }}
-          >
-            {coverUrl ? (
-              <img src={coverUrl} alt={track.title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                <Icon name="music" size={64} className="text-gray-600" />
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${coverUrl})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(60px) brightness(0.25)',
+              transform: 'scale(1.5)',
+            }}
+          />
+        )}
+        <div className="absolute inset-0 bg-black/50" />
+
+        {/* 关闭按钮 */}
+        <button
+          className="absolute top-4 right-4 z-20 text-white/50 hover:text-white p-1.5 rounded-full hover:bg-white/10 transition-colors"
+          onClick={handleClose}
+        >
+          <Icon name="close" size={22} />
+        </button>
+
+        {/* 内容：左封面 + 右歌词 */}
+        <div className="relative z-10 flex items-stretch h-full p-8 gap-8">
+          {/* 左侧：封面 + 信息 + 控制 */}
+          <div className="flex flex-col items-center justify-center gap-5 flex-shrink-0" style={{ width: '38%' }}>
+            {/* 封面 */}
+            <div className="w-full aspect-square max-w-[320px] rounded-2xl overflow-hidden shadow-xl">
+              {coverUrl ? (
+                <img src={coverUrl} alt={track.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                  <Icon name="music" size={48} className="text-gray-600" />
+                </div>
+              )}
+            </div>
+
+            {/* 曲名 */}
+            <div className="text-center max-w-full">
+              <h2 className="text-lg font-bold text-white truncate">{track.title}</h2>
+              <p className="text-xs text-white/40 mt-0.5 truncate">{track.artist} — {track.album}</p>
+            </div>
+
+            {/* 进度条 */}
+            <div className="w-full max-w-[280px]">
+              <div className="h-1 bg-white/10 rounded-full cursor-pointer group" onClick={handleProgressClick}>
+                <div
+                  className="h-full bg-white rounded-full relative transition-all duration-100"
+                  style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+                >
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
               </div>
-            )}
-          </div>
+              <div className="flex justify-between mt-1 text-[10px] text-white/30">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(duration)}</span>
+              </div>
+            </div>
 
-          {/* 曲名 + 艺术家 */}
-          <div className="text-center max-w-full">
-            <h2 className="text-xl font-bold text-white truncate">{track.title}</h2>
-            <p className="text-sm text-white/50 mt-1 truncate">{track.artist} — {track.album}</p>
-          </div>
-
-          {/* 进度条 */}
-          <div className="w-full max-w-sm">
-            <div
-              className="h-1 bg-white/10 rounded-full cursor-pointer group"
-              onClick={handleProgressClick}
-            >
-              <div
-                className="h-full bg-white rounded-full relative transition-all duration-100"
-                style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+            {/* 控制按钮 */}
+            <div className="flex items-center gap-4">
+              <button
+                className={`p-1 rounded-full transition-colors ${mode !== 'sequential' ? 'text-blue-400' : 'text-white/30 hover:text-white'}`}
+                onClick={cycleMode}
               >
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            </div>
-            <div className="flex justify-between mt-1.5 text-xs text-white/40">
-              <span>{formatTime(currentTime)}</span>
-              <span>{formatTime(duration)}</span>
+                <Icon name={modeIcons[mode]} size={18} />
+              </button>
+              <button className="text-white/60 hover:text-white p-1" onClick={prev}>
+                <Icon name="skip-back" size={22} />
+              </button>
+              <button
+                className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-black hover:scale-105 transition-transform shadow-lg"
+                onClick={togglePlay}
+              >
+                <Icon name={isPlaying ? 'pause' : 'play'} size={22} className={isPlaying ? '' : 'ml-0.5'} />
+              </button>
+              <button className="text-white/60 hover:text-white p-1" onClick={next}>
+                <Icon name="skip-forward" size={22} />
+              </button>
+              <button
+                className="text-white/30 hover:text-white"
+                onClick={() => setVolume(volume === 0 ? 0.7 : 0)}
+              >
+                <Icon name={volume === 0 ? 'volume-mute' : volume < 0.5 ? 'volume-low' : 'volume'} size={16} />
+              </button>
             </div>
           </div>
 
-          {/* 控制按钮 */}
-          <div className="flex items-center gap-5">
-            <button
-              className={`p-1.5 rounded-full transition-colors ${
-                mode !== 'sequential' ? 'text-blue-400' : 'text-white/40 hover:text-white'
-              }`}
-              onClick={cycleMode}
-            >
-              <Icon name={modeIcons[mode]} size={20} />
-            </button>
-            <button className="text-white/70 hover:text-white p-1.5" onClick={prev}>
-              <Icon name="skip-back" size={26} />
-            </button>
-            <button
-              className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-black hover:scale-105 transition-transform shadow-xl"
-              onClick={togglePlay}
-            >
-              <Icon name={isPlaying ? 'pause' : 'play'} size={24} className={isPlaying ? '' : 'ml-0.5'} />
-            </button>
-            <button className="text-white/70 hover:text-white p-1.5" onClick={next}>
-              <Icon name="skip-forward" size={26} />
-            </button>
-            <button
-              className="text-white/40 hover:text-white"
-              onClick={() => setVolume(volume === 0 ? 0.7 : 0)}
-            >
-              <Icon name={getVolumeIcon()} size={18} />
-            </button>
+          {/* 右侧：歌词 */}
+          <div className="flex-1 min-w-0 bg-white/5 rounded-xl overflow-hidden border border-white/5">
+            <LyricView lyrics={lyrics} currentTime={currentTime} />
           </div>
-        </div>
-
-        {/* 右侧：歌词 */}
-        <div className="flex-1 max-w-lg h-[65vh] bg-white/5 rounded-2xl overflow-hidden backdrop-blur-xl border border-white/5">
-          <LyricView lyrics={lyrics} currentTime={currentTime} />
         </div>
       </div>
     </div>
